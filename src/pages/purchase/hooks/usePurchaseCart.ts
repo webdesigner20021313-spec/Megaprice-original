@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { CartItem } from '@/pages/purchase/types/purchase.types'
+import { demoCartItems } from '@/mocks/demoCart'
 
 interface PurchaseCartState {
   items: CartItem[]
@@ -12,7 +13,7 @@ interface PurchaseCartState {
 }
 
 export const usePurchaseCart = create<PurchaseCartState>((set, get) => ({
-  items: [],
+  items: demoCartItems,
 
   addItem: (item) => {
     set((state) => {

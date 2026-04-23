@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import {
   Bell,
   Search,
-  Menu,
   LogOut,
   User,
   CheckCheck,
@@ -31,7 +30,7 @@ const searchablePages = [
 ]
 
 export function Header() {
-  const { toggleMobileSidebar, language, setLanguage } = useUIStore()
+  const { language, setLanguage } = useUIStore()
   const { user } = useUserStore()
   const { notifications, markAsRead, markAllRead, unreadCount } = useNotificationStore()
   const { toast } = useToast()

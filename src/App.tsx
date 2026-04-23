@@ -13,6 +13,8 @@ import { PharmacyDetailPage } from '@/pages/pharmacies/PharmacyDetailPage'
 import { ReportsPage } from '@/pages/analytics/ReportsPage'
 import { StatisticsPage } from '@/pages/analytics/StatisticsPage'
 import { SettingsPage } from '@/pages/settings/SettingsPage'
+import { CartPage } from '@/pages/cart/CartPage'
+import { NeedPage } from '@/pages/need/NeedPage'
 
 function App() {
   return (
@@ -38,7 +40,8 @@ function App() {
           <Route path="reports" element={<ReportsPage />} />
           <Route path="statistics" element={<StatisticsPage />} />
         </Route>
-        <Route path="cart" element={<SettingsPage />} />
+        <Route path="cart" element={<CartPage />} />
+        <Route path="need" element={<NeedPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

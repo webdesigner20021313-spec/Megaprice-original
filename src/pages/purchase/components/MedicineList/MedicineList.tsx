@@ -58,11 +58,10 @@ export function MedicineList({
   const allFavoriteIds = useMemo(() => {
     const mockFavIds = mockMedicines.filter((m) => m.isFavorite).map((m) => m.id)
     return Array.from(new Set([...mockFavIds, ...favoriteIds]))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [favoriteIds.length])
+  }, [favoriteIds])
 
   const baseList = useMemo(() => {
-    if (activeTab === 'pos') return mockPosItems
+    if ((activeTab as string) === 'pos') return mockPosItems
     return mockMedicines
   }, [activeTab])
 
@@ -90,6 +89,7 @@ export function MedicineList({
       <div className="flex flex-1 flex-col overflow-hidden">
         <ExcelUploadView
           medicines={excelMedicines}
+          catalogMedicines={mockMedicines}
           onMedicinesLoaded={setExcelMedicines}
           selectedId={selectedMedicine?.id ?? null}
           onSelect={onSelect}

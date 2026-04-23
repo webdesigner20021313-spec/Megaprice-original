@@ -3,31 +3,39 @@ import { PurchaseHeader } from './components/PurchaseHeader'
 import { MedicineList } from './components/MedicineList/MedicineList'
 import { SupplierOffers } from './components/SupplierOffers/SupplierOffers'
 import { AutoSelectModal } from './components/AutoSelect/AutoSelectModal'
+import { WholesalersView } from './components/WholesalersView'
+import { DistributorProducts } from './components/DistributorProducts'
 import { mockSupplierOffers, mockMedicines } from '@/mocks/purchase.mocks'
 import { usePurchaseCart } from './hooks/usePurchaseCart'
-import type { Medicine, SupplierOffer } from './types/purchase.types'
+import type { Medicine, SupplierOffer, Distributor } from './types/purchase.types'
 
 export type PurchaseTab = 'manual' | 'excel' | 'wholesalers'
 
 export function PurchasePage() {
   const [activeTab, setActiveTab] = useState<PurchaseTab>('manual')
   const [selectedMedicine, setSelectedMedicine] = useState<Medicine | null>(null)
+  const [selectedDistributor, setSelectedDistributor] = useState<Distributor | null>(null)
   const [checkedIds, setCheckedIds] = useState<string[]>([])
   const [showAutoSelect, setShowAutoSelect] = useState(false)
   const [showFavorites, setShowFavorites] = useState(false)
-  const [splitPct, setSplitPct] = useState(36)
+  const [splitPct,    setSplitPct]    = useState(36)
+  const [wSplitPct,   setWSplitPct]   = useState(25)
 
   const containerRef = useRef<HTMLDivElement>(null)
 
   const { addItem } = usePurchaseCart()
 
+  const currentSplit    = activeTab === 'wholesalers' ? wSplitPct    : splitPct
+  const setCurrentSplit = activeTab === 'wholesalers' ? setWSplitPct : setSplitPct
+
   function startSplitResize(e: React.MouseEvent) {
     e.preventDefault()
-    const containerLeft = containerRef.current!.getBoundingClientRect().left
-    const containerWidth = containerRef.current!.offsetWidth
+    if (!containerRef.current) return
+    const containerLeft = containerRef.current.getBoundingClientRect().left
+    const containerWidth = containerRef.current.offsetWidth
     function onMove(ev: MouseEvent) {
       const pct = ((ev.clientX - containerLeft) / containerWidth) * 100
-      setSplitPct(Math.min(80, Math.max(20, pct)))
+      setCurrentSplit(Math.min(80, Math.max(20, pct)))
     }
     function onUp() {
       document.removeEventListener('mousemove', onMove)
@@ -64,20 +72,26 @@ export function PurchasePage() {
       />
 
       <div ref={containerRef} className="flex flex-1 overflow-hidden">
-        {/* Left panel — medicine list */}
+        {/* Left panel — меняется в зависимости от вкладки */}
         <div
           className="flex flex-col overflow-hidden border-r border-gray-200"
-          style={{ width: `${splitPct}%`, minWidth: 300 }}
+          style={{ width: `${currentSplit}%`, minWidth: 200 }}
         >
-          <MedicineList
-            activeTab={activeTab}
-            selectedMedicine={selectedMedicine}
-            onSelect={setSelectedMedicine}
-            checkedIds={checkedIds}
-            onToggleCheck={handleToggleCheck}
-            showFavorites={showFavorites}
-            onAutoSelect={() => setShowAutoSelect(true)}
-          />
+          {activeTab === 'wholesalers'
+            ? <WholesalersView
+                selectedId={selectedDistributor?.id ?? null}
+                onSelect={setSelectedDistributor}
+              />
+            : <MedicineList
+                activeTab={activeTab}
+                selectedMedicine={selectedMedicine}
+                onSelect={setSelectedMedicine}
+                checkedIds={checkedIds}
+                onToggleCheck={handleToggleCheck}
+                showFavorites={showFavorites}
+                onAutoSelect={() => setShowAutoSelect(true)}
+              />
+          }
         </div>
 
         {/* Resize handle */}
@@ -86,9 +100,12 @@ export function PurchasePage() {
           className="flex w-2 cursor-col-resize items-center justify-center bg-gray-200 transition-colors hover:bg-blue-400 active:bg-blue-500"
         />
 
-        {/* Right panel — supplier offers */}
+        {/* Right panel — меняется только в режиме оптовиков */}
         <div className="flex flex-1 flex-col overflow-hidden">
-          <SupplierOffers medicine={selectedMedicine} />
+          {activeTab === 'wholesalers'
+            ? <DistributorProducts distributor={selectedDistributor} />
+            : <SupplierOffers medicine={selectedMedicine} />
+          }
         </div>
       </div>
 

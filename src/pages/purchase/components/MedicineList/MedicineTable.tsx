@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { MedicineRow } from './MedicineRow'
 import type { Medicine } from '@/pages/purchase/types/purchase.types'
 
@@ -26,6 +27,19 @@ export function MedicineTable({
   const nameW  = Math.max(MIN_NAME, panel1Width - FIXED)
   const tableW = Math.max(MIN_NAME + FIXED, panel1Width)
 
+  const allChecked  = medicines.length > 0 && medicines.every((m) => checkedIds.includes(m.id))
+  const someChecked = !allChecked && medicines.some((m) => checkedIds.includes(m.id))
+  const cbRef = useRef<HTMLInputElement>(null)
+  if (cbRef.current) cbRef.current.indeterminate = someChecked
+
+  function handleSelectAll() {
+    if (allChecked) {
+      medicines.forEach((m) => { if (checkedIds.includes(m.id)) onToggleCheck(m.id) })
+    } else {
+      medicines.forEach((m) => { if (!checkedIds.includes(m.id)) onToggleCheck(m.id) })
+    }
+  }
+
   if (medicines.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -44,7 +58,6 @@ export function MedicineTable({
       </colgroup>
       <thead>
         <tr style={{ height: 48 }}>
-          {/* Checkbox header — sticky top + left */}
           <th
             style={{
               position: 'sticky', top: 0, left: 0, zIndex: 4,
@@ -52,8 +65,17 @@ export function MedicineTable({
               borderBottom: '1px solid #e5e7eb',
               boxShadow: '1px 0 0 #e5e7eb',
             }}
-          />
-          {/* Название header */}
+          >
+            <div style={{ height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <input
+                ref={cbRef}
+                type="checkbox"
+                checked={allChecked}
+                onChange={handleSelectAll}
+                className="h-4 w-4 cursor-pointer rounded border-gray-300 accent-gray-900"
+              />
+            </div>
+          </th>
           <th
             style={{
               position: 'sticky', top: 0, zIndex: 2, background: '#F9FAFB',
@@ -67,7 +89,6 @@ export function MedicineTable({
               Название
             </span>
           </th>
-          {/* МНН header */}
           <th
             style={{
               position: 'sticky', top: 0, zIndex: 2, background: '#F9FAFB',
@@ -81,7 +102,6 @@ export function MedicineTable({
               МНН
             </span>
           </th>
-          {/* Fav header — sticky top + right */}
           <th
             style={{
               position: 'sticky', top: 0, right: 0, zIndex: 4,

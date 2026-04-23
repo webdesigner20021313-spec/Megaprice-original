@@ -20,7 +20,7 @@
 ### Design Tokens (кратко — полное в STYLE_GUIDE.md)
 - **Шрифт:** Inter (только Inter, везде)
 - **Цвет текста:** `#111827` (основной), `#6B7280` (вторичный)
-- **Фон страницы:** `#F8FAFC` (slate-50)
+- **Фон страницы:** `#FFFFFF` (white)
 - **Фон карточки/панели:** `#FFFFFF`, border `#E5E7EB`
 - **Primary button:** `bg-gray-900` / `hover:bg-black`, text-white
 - **Secondary button:** `bg-white border border-gray-300 text-gray-700`

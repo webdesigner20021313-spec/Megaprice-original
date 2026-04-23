@@ -1,4 +1,5 @@
 import { ShoppingCart, Heart } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { usePurchaseCart } from '@/pages/purchase/hooks/usePurchaseCart'
 import type { PurchaseTab } from '../PurchasePage'
@@ -23,6 +24,7 @@ showFavorites,
   onFavoritesToggle,
 }: PurchaseHeaderProps) {
   const totalItems = usePurchaseCart((s) => s.totalItems)
+  const navigate = useNavigate()
 
   return (
     <div className="flex shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 py-3">
@@ -61,7 +63,7 @@ showFavorites,
         </button>
 
         {/* Cart */}
-        <button className="flex h-10 items-center gap-1.5 rounded-lg bg-gray-900 px-4 text-sm font-medium text-white transition-colors hover:bg-black">
+        <button onClick={() => navigate('/cart')} className="flex h-10 items-center gap-1.5 rounded-lg bg-gray-900 px-4 text-sm font-medium text-white transition-colors hover:bg-black">
           <ShoppingCart className="h-4 w-4" />
           Корзина
           {totalItems() > 0 && (

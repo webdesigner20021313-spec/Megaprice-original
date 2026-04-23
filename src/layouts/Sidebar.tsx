@@ -4,6 +4,7 @@ import {
   ClipboardList,
   ShoppingCart,
   BarChart3,
+  TrendingUp,
   Terminal,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -16,10 +17,11 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: 'Магазин',     path: '/purchase',          icon: <Store className="h-6 w-6" />,        end: true  },
-  { label: 'Потребность', path: '/orders',             icon: <ClipboardList className="h-6 w-6" />, end: true  },
-  { label: 'Корзинка',    path: '/cart',               icon: <ShoppingCart className="h-6 w-6" />,  end: true  },
-  { label: 'Аналитика',   path: '/analytics/reports',  icon: <BarChart3 className="h-6 w-6" />,     end: false },
+  { label: 'Магазин',     path: '/purchase',          icon: <Store className="h-6 w-6" />,       end: true  },
+  { label: 'Потребность', path: '/need',              icon: <TrendingUp className="h-6 w-6" />,  end: true  },
+  { label: 'Корзинка',    path: '/cart',              icon: <ShoppingCart className="h-6 w-6" />, end: true  },
+  { label: 'Заказы',      path: '/orders',            icon: <ClipboardList className="h-6 w-6" />, end: false },
+  { label: 'Аналитика',   path: '/analytics/reports', icon: <BarChart3 className="h-6 w-6" />,    end: false },
 ]
 
 export function Sidebar() {

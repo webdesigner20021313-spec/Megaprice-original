@@ -9,6 +9,7 @@ export interface Medicine {
   id: string
   name: string
   mnn: string
+  mnnLatin?: string
   manufacturer: string
   country: string
   isFavorite: boolean
@@ -22,14 +23,17 @@ export interface PaymentOption {
   label: string               // читаемое название
 }
 
+export interface Distributor {
+  id: string
+  name: string
+  city: string
+  lastPriceDate: string
+}
+
 export interface SupplierOffer {
   id: string
   medicineId: string
-  distributor: {
-    id: string
-    name: string
-    city: string
-  }
+  distributor: Distributor
   expiryDate: string
   paymentTypes: PaymentOption[]   // один или несколько вариантов оплаты
   priceWithVat: number
