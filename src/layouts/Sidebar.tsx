@@ -58,7 +58,7 @@ export function Sidebar() {
                       'flex h-[40px] w-[108px] shrink-0 items-center justify-center rounded-[120px] transition-all duration-150',
                       isActive
                         ? 'bg-white text-gray-900'
-                        : 'text-[#666666] group-hover:text-stone-300'
+                        : 'text-[#6B7280] group-hover:text-stone-300'
                     )}
                   >
                     {item.icon}
@@ -70,7 +70,7 @@ export function Sidebar() {
                       'text-center text-[16px] leading-tight',
                       isActive
                         ? 'font-semibold text-white'
-                        : 'font-normal text-[#666666] group-hover:text-stone-300'
+                        : 'font-normal text-[#6B7280] group-hover:text-stone-300'
                     )}
                   >
                     {item.label}
@@ -83,8 +83,8 @@ export function Sidebar() {
       </nav>
 
       {/* Version */}
-      <div className="shrink-0 border-t border-[#666666] py-[16px]">
-        <p className="text-center text-[14px] text-[#666666]">v1.0</p>
+      <div className="shrink-0 border-t border-[#6B7280] py-[16px]">
+        <p className="text-center text-[14px] text-[#6B7280]">v1.0</p>
       </div>
     </aside>
   )

@@ -240,7 +240,7 @@ export function CartPage() {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-gray-50">
+    <div className="flex h-full flex-col overflow-hidden bg-white">
 
       {/* ── Шапка ── */}
       <div className="shrink-0 border-b border-gray-200 bg-white px-6 py-4">
@@ -362,7 +362,7 @@ export function CartPage() {
                     {/* Строки товаров */}
                     {!isCollapsed && (
                       <div className="divide-y divide-gray-100">
-                        {group.items.map((item, idx) => {
+                        {group.items.map((item) => {
                           const isChecked = checkedIds.has(item.offerId)
                           const lineTotal = item.offer.priceWithVat * item.quantity
 
@@ -371,7 +371,7 @@ export function CartPage() {
                               key={item.offerId}
                               className={cn(
                                 'flex items-center gap-4 px-4 py-3.5 transition-colors duration-100',
-                                isChecked ? 'bg-blue-50/40' : idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/40',
+                                isChecked ? 'bg-gray-50' : 'bg-white hover:bg-gray-50/60',
                               )}
                             >
                               <input

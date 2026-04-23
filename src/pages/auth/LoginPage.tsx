@@ -191,7 +191,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#F4F5F7] px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#F9FAFB] px-4">
 
       {/* card */}
       <div className="w-full max-w-[420px] rounded-2xl bg-white px-8 py-8 shadow-sm">

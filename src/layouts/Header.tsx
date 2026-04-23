@@ -249,14 +249,14 @@ export function Header() {
                     onClick={() => markAsRead(n.id)}
                     className={cn(
                       'flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50',
-                      !n.read && 'bg-[#f8f8ff]'
+                      !n.read && 'bg-gray-50'
                     )}
                   >
                     <span className={cn(
                       'mt-1.5 h-2 w-2 shrink-0 rounded-full',
-                      n.type === 'success' && 'bg-[#11a849]',
+                      n.type === 'success' && 'bg-[#065F46]',
                       n.type === 'info' && 'bg-[#3872FA]',
-                      n.type === 'warning' && 'bg-[#f5a623]',
+                      n.type === 'warning' && 'bg-[#92400E]',
                       n.type === 'error' && 'bg-[#991B1B]',
                       n.read && 'opacity-30'
                     )} />
