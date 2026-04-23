@@ -1,5 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { RootLayout } from '@/layouts/RootLayout'
+import { PrivateRoute } from '@/components/shared/PrivateRoute'
+import { LoginPage } from '@/pages/auth/LoginPage'
 import { DashboardPage } from '@/pages/dashboard/DashboardPage'
 import { PurchasePage } from '@/pages/purchase/PurchasePage'
 import { OrderHistoryPage } from '@/pages/orders/OrderHistoryPage'
@@ -19,7 +21,17 @@ import { NeedPage } from '@/pages/need/NeedPage'
 function App() {
   return (
     <Routes>
-      <Route element={<RootLayout />}>
+      {/* Public */}
+      <Route path="/login" element={<LoginPage />} />
+
+      {/* Protected */}
+      <Route
+        element={
+          <PrivateRoute>
+            <RootLayout />
+          </PrivateRoute>
+        }
+      >
         <Route index element={<DashboardPage />} />
         <Route path="purchase" element={<PurchasePage />} />
         <Route path="orders">

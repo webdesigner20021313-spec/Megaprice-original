@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores/useUIStore'
 import { useUserStore } from '@/stores/useUserStore'
 import { useNotificationStore } from '@/stores/useNotificationStore'
+import { useAuthStore } from '@/stores/useAuthStore'
 import { useToast } from '@/components/shared/Toaster'
 import { formatDateTime } from '@/lib/format'
 
@@ -33,6 +34,7 @@ export function Header() {
   const { language, setLanguage } = useUIStore()
   const { user } = useUserStore()
   const { notifications, markAsRead, markAllRead, unreadCount } = useNotificationStore()
+  const logout = useAuthStore((s) => s.logout)
   const { toast } = useToast()
   const navigate = useNavigate()
 
@@ -333,6 +335,8 @@ export function Header() {
                 <button
                   onClick={() => {
                     setShowProfile(false)
+                    logout()
+                    navigate('/login', { replace: true })
                     toast({ title: 'Вы вышли из системы', description: 'До свидания!', variant: 'default' })
                   }}
                   className="flex w-full items-center gap-3 px-4 py-2 text-sm text-red-500 transition-colors hover:bg-red-50"
