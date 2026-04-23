@@ -84,7 +84,7 @@ export function Sidebar() {
 
       {/* Version */}
       <div className="shrink-0 border-t border-[#6B7280] py-[16px]">
-        <p className="text-center text-[14px] text-[#6B7280]">v1.0</p>
+        <p className="text-center text-[14px] text-[#6B7280]">v1.0.4</p>
       </div>
     </aside>
   )
