@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Eye, EyeOff, ShoppingBag, X, CheckCircle2 } from 'lucide-react'
+import { Eye, EyeOff, User, Lock, X, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { cn } from '@/lib/utils'
+import logoSvg from '@/assets/logo.svg'
 
 // ── Forgot-password modal ──────────────────────────────────────────────────
 
@@ -40,15 +40,11 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* overlay */}
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
         onClick={onClose}
       />
-
-      {/* dialog */}
-      <div className="relative z-10 w-full max-w-sm rounded-xl bg-white p-6 shadow-lg">
-        {/* close */}
+      <div className="relative z-10 w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
         <button
           type="button"
           onClick={onClose}
@@ -60,33 +56,30 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
 
         {step === 'phone' && (
           <>
-            <h2 className="mb-1 text-[17px] font-semibold text-gray-900">
-              Восстановление пароля
-            </h2>
+            <h2 className="mb-1 text-[17px] font-semibold text-gray-900">Восстановление пароля</h2>
             <p className="mb-5 text-sm text-gray-500">
-              Введите номер телефона — отправим SMS с кодом подтверждения
+              Введите номер телефона — отправим SMS с кодом
             </p>
-
             <div className="flex flex-col gap-4">
-              <Input
-                label="Номер телефона"
-                type="tel"
-                placeholder="+998 90 123 45 67"
-                value={phone}
-                onChange={(e) => {
-                  setPhone(e.target.value)
-                  if (phoneError) setPhoneError('')
-                }}
-                error={phoneError}
-                autoFocus
-              />
-
-              <Button
-                variant="primary"
-                size="md"
-                className="w-full"
-                onClick={handleSendCode}
-              >
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700">Номер телефона</label>
+                <input
+                  type="tel"
+                  placeholder="+998 90 123 45 67"
+                  value={phone}
+                  onChange={(e) => { setPhone(e.target.value); if (phoneError) setPhoneError('') }}
+                  autoFocus
+                  className={cn(
+                    'h-11 w-full rounded-xl border bg-gray-50 px-4 text-sm text-gray-800 placeholder:text-gray-400',
+                    'transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1',
+                    phoneError
+                      ? 'border-red-300 focus:border-red-400 focus:ring-red-200'
+                      : 'border-gray-200 focus:border-gray-400 focus:ring-gray-200'
+                  )}
+                />
+                {phoneError && <p className="text-xs text-red-500">{phoneError}</p>}
+              </div>
+              <Button variant="primary" size="md" className="w-full rounded-xl" onClick={handleSendCode}>
                 Получить код
               </Button>
             </div>
@@ -95,57 +88,41 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
 
         {step === 'code' && (
           <>
-            <h2 className="mb-1 text-[17px] font-semibold text-gray-900">
-              Введите код
-            </h2>
+            <h2 className="mb-1 text-[17px] font-semibold text-gray-900">Введите код</h2>
             <p className="mb-4 text-sm text-gray-500">
-              Код отправлен на номер{' '}
+              Код отправлен на{' '}
               <span className="font-medium text-gray-700">{phone}</span>
             </p>
-
-            {/* demo hint */}
-            <div className="mb-4 flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2.5">
-              <span className="text-xs text-blue-700">
-                Демо-режим: ваш код —{' '}
-                <span className="font-bold tracking-widest">{MOCK_CODE}</span>
-              </span>
+            <div className="mb-4 rounded-xl bg-blue-50 px-4 py-3 text-xs text-blue-700">
+              Демо-режим: ваш код —{' '}
+              <span className="font-bold tracking-widest">{MOCK_CODE}</span>
             </div>
-
             <div className="flex flex-col gap-4">
-              <Input
-                label="6-значный код"
-                type="text"
-                inputMode="numeric"
-                maxLength={6}
-                placeholder="000000"
-                value={code}
-                onChange={(e) => {
-                  setCode(e.target.value.replace(/\D/g, '').slice(0, 6))
-                  if (codeError) setCodeError('')
-                }}
-                error={codeError}
-                autoFocus
-              />
-
-              <Button
-                variant="primary"
-                size="md"
-                className="w-full"
-                onClick={handleVerifyCode}
-                disabled={code.length !== 6}
-              >
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700">6-значный код</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="000000"
+                  value={code}
+                  onChange={(e) => { setCode(e.target.value.replace(/\D/g, '').slice(0, 6)); if (codeError) setCodeError('') }}
+                  autoFocus
+                  className={cn(
+                    'h-11 w-full rounded-xl border bg-gray-50 px-4 text-sm tracking-widest text-gray-800 placeholder:text-gray-400',
+                    'transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1',
+                    codeError
+                      ? 'border-red-300 focus:border-red-400 focus:ring-red-200'
+                      : 'border-gray-200 focus:border-gray-400 focus:ring-gray-200'
+                  )}
+                />
+                {codeError && <p className="text-xs text-red-500">{codeError}</p>}
+              </div>
+              <Button variant="primary" size="md" className="w-full rounded-xl" onClick={handleVerifyCode} disabled={code.length !== 6}>
                 Подтвердить
               </Button>
-
-              <button
-                type="button"
-                className="text-center text-sm text-gray-500 hover:text-gray-700 transition-colors"
-                onClick={() => {
-                  setCode('')
-                  setCodeError('')
-                  setStep('phone')
-                }}
-              >
+              <button type="button" className="text-center text-sm text-gray-400 hover:text-gray-600 transition-colors"
+                onClick={() => { setCode(''); setCodeError(''); setStep('phone') }}>
                 Изменить номер
               </button>
             </div>
@@ -157,19 +134,11 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
             <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-50">
               <CheckCircle2 size={32} className="text-green-600" />
             </div>
-            <h2 className="mb-1 text-[17px] font-semibold text-gray-900">
-              Код подтверждён
-            </h2>
+            <h2 className="mb-1 text-[17px] font-semibold text-gray-900">Код подтверждён</h2>
             <p className="mb-6 text-sm text-gray-500">
-              В реальном приложении здесь был бы сброс пароля. Войдите с
-              текущими данными.
+              Войдите с текущими данными аккаунта.
             </p>
-            <Button
-              variant="primary"
-              size="md"
-              className="w-full"
-              onClick={onClose}
-            >
+            <Button variant="primary" size="md" className="w-full rounded-xl" onClick={onClose}>
               Вернуться ко входу
             </Button>
           </div>
@@ -195,24 +164,14 @@ export function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [showForgot, setShowForgot] = useState(false)
 
-  const from =
-    (location.state as { from?: { pathname: string } })?.from?.pathname ||
-    '/purchase'
+  const rawFrom =
+    (location.state as { from?: { pathname: string } })?.from?.pathname
+  const from = !rawFrom || rawFrom === '/' ? '/purchase' : rawFrom
 
   function validate() {
     let ok = true
-    if (!loginValue.trim()) {
-      setLoginError('Введите логин')
-      ok = false
-    } else {
-      setLoginError('')
-    }
-    if (!password) {
-      setPasswordError('Введите пароль')
-      ok = false
-    } else {
-      setPasswordError('')
-    }
+    if (!loginValue.trim()) { setLoginError('Введите логин'); ok = false } else setLoginError('')
+    if (!password) { setPasswordError('Введите пароль'); ok = false } else setPasswordError('')
     return ok
   }
 
@@ -220,14 +179,10 @@ export function LoginPage() {
     e.preventDefault()
     setAuthError('')
     if (!validate()) return
-
     setIsLoading(true)
-    // tiny delay to simulate network
     await new Promise((r) => setTimeout(r, 500))
-
     const ok = login(loginValue, password)
     setIsLoading(false)
-
     if (ok) {
       navigate(from, { replace: true })
     } else {
@@ -236,48 +191,70 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      {/* card */}
-      <div className="w-full max-w-[400px] rounded-2xl bg-white px-8 py-10 shadow-sm border border-gray-100">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#F4F5F7] px-4">
 
-        {/* logo */}
-        <div className="mb-8 flex flex-col items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-900">
-            <ShoppingBag size={24} className="text-white" />
-          </div>
-          <div className="text-center">
-            <h1 className="text-[22px] font-bold tracking-tight text-gray-900">
-              MegaPrice
-            </h1>
-            <p className="mt-0.5 text-sm text-gray-500">
-              Платформа заказов для аптек
-            </p>
-          </div>
+      {/* card */}
+      <div className="w-full max-w-[420px] rounded-2xl bg-white px-8 py-8 shadow-sm">
+
+        {/* logo inside card */}
+        <div className="mb-6 flex justify-center">
+          <img src={logoSvg} alt="MegaPrice" className="h-10 w-auto" />
+        </div>
+
+        {/* title */}
+        <div className="mb-6">
+          <h1 className="text-[20px] font-bold text-gray-900">Войти в аккаунт</h1>
+          <p className="mt-1 text-sm text-gray-500">Введите логин и пароль для входа</p>
         </div>
 
         {/* form */}
         <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-          <Input
-            label="Логин"
-            type="text"
-            placeholder="admin@megaprice.uz"
-            value={loginValue}
-            onChange={(e) => {
-              setLoginValue(e.target.value)
-              if (loginError) setLoginError('')
-              if (authError) setAuthError('')
-            }}
-            error={loginError}
-            autoComplete="username"
-            autoFocus
-          />
 
+          {/* login field */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-gray-700">Пароль</label>
+            <label className="text-sm font-medium text-gray-700">Логин</label>
             <div className="relative">
+              <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Введите логин"
+                value={loginValue}
+                onChange={(e) => {
+                  setLoginValue(e.target.value)
+                  if (loginError) setLoginError('')
+                  if (authError) setAuthError('')
+                }}
+                autoComplete="username"
+                autoFocus
+                className={cn(
+                  'h-11 w-full rounded-xl border bg-gray-50 pl-10 pr-4 text-sm text-gray-800 placeholder:text-gray-400',
+                  'transition-colors focus:outline-none focus:bg-white focus:ring-2 focus:ring-offset-1',
+                  loginError || authError
+                    ? 'border-red-300 focus:border-red-400 focus:ring-red-200'
+                    : 'border-gray-200 focus:border-gray-400 focus:ring-gray-900/10'
+                )}
+              />
+            </div>
+            {loginError && <p className="text-xs text-red-500">{loginError}</p>}
+          </div>
+
+          {/* password field */}
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-gray-700">Пароль</label>
+              <button
+                type="button"
+                onClick={() => setShowForgot(true)}
+                className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
+              >
+                Забыли пароль?
+              </button>
+            </div>
+            <div className="relative">
+              <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type={showPassword ? 'text' : 'password'}
-                placeholder="••••••••"
+                placeholder="Введите пароль"
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value)
@@ -286,51 +263,39 @@ export function LoginPage() {
                 }}
                 autoComplete="current-password"
                 className={cn(
-                  'flex h-10 w-full rounded-md border bg-white px-3 py-2 pr-10 text-sm text-gray-700 placeholder:text-gray-400',
-                  'transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
+                  'h-11 w-full rounded-xl border bg-gray-50 pl-10 pr-10 text-sm text-gray-800 placeholder:text-gray-400',
+                  'transition-colors focus:outline-none focus:bg-white focus:ring-2 focus:ring-offset-1',
                   passwordError || authError
-                    ? 'border-[#ee0000] focus-visible:border-[#ee0000] focus-visible:ring-[#ee0000]/20'
-                    : 'border-gray-200 hover:border-gray-300 focus-visible:border-gray-900 focus-visible:ring-gray-900/20'
+                    ? 'border-red-300 focus:border-red-400 focus:ring-red-200'
+                    : 'border-gray-200 focus:border-gray-400 focus:ring-gray-900/10'
                 )}
               />
               <button
                 type="button"
                 tabIndex={-1}
                 onClick={() => setShowPassword((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
-            {passwordError && (
-              <p className="text-xs text-[#ee0000]">{passwordError}</p>
-            )}
+            {passwordError && <p className="text-xs text-red-500">{passwordError}</p>}
           </div>
 
           {/* auth error */}
           {authError && (
-            <p className="rounded-lg bg-red-50 px-3 py-2.5 text-sm text-red-600">
+            <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
               {authError}
-            </p>
+            </div>
           )}
 
-          {/* forgot password */}
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={() => setShowForgot(true)}
-              className="text-sm text-gray-500 hover:text-gray-800 transition-colors"
-            >
-              Забыли пароль?
-            </button>
-          </div>
-
+          {/* submit */}
           <Button
             type="submit"
             variant="primary"
             size="lg"
-            className="mt-1 w-full"
+            className="mt-1 w-full rounded-xl"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -344,28 +309,32 @@ export function LoginPage() {
           </Button>
         </form>
 
-        {/* demo hint */}
-        <div className="mt-6 rounded-lg bg-gray-50 px-4 py-3">
-          <p className="text-[12px] font-medium text-gray-500 mb-1">Демо-данные для входа</p>
-          <p className="text-[12px] text-gray-600">
-            Логин:{' '}
-            <span className="font-mono font-semibold text-gray-800">
-              admin@megaprice.uz
-            </span>
-          </p>
-          <p className="text-[12px] text-gray-600">
-            Пароль:{' '}
-            <span className="font-mono font-semibold text-gray-800">
-              Mega2026
-            </span>
-          </p>
+        {/* divider */}
+        <div className="my-5 flex items-center gap-3">
+          <div className="h-px flex-1 bg-gray-200" />
+          <span className="text-xs text-gray-400">или</span>
+          <div className="h-px flex-1 bg-gray-200" />
         </div>
+
+        {/* register link */}
+        <p className="text-center text-sm text-gray-500">
+          Нет аккаунта?{' '}
+          <span className="cursor-pointer font-medium text-blue-600 hover:text-blue-800 transition-colors">
+            Оставить заявку
+          </span>
+        </p>
       </div>
 
+      {/* footer */}
+      <p className="mt-6 max-w-[360px] text-center text-[12px] text-gray-400">
+        Нажимая «Войти», вы соглашаетесь с{' '}
+        <span className="underline cursor-pointer hover:text-gray-600">Условиями использования</span>
+        {' '}и{' '}
+        <span className="underline cursor-pointer hover:text-gray-600">Политикой конфиденциальности</span>
+      </p>
+
       {/* forgot password modal */}
-      {showForgot && (
-        <ForgotPasswordModal onClose={() => setShowForgot(false)} />
-      )}
+      {showForgot && <ForgotPasswordModal onClose={() => setShowForgot(false)} />}
     </div>
   )
 }
