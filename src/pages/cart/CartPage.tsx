@@ -213,9 +213,6 @@ export function CartPage() {
   const invoiceItemCnt = invoiceGroups.reduce((s, g) => s + g.items.length, 0)
   const invoiceQtyCnt  = invoiceGroups.reduce((s, g) => s + g.qty, 0)
 
-  const totalItemsCount = items.length
-  const totalQtyCount   = items.reduce((s, i) => s + i.quantity, 0)
-
   function createOrder() {
     if (!invoiceGroups.length) return
     setSuccessPayload({ groups: invoiceGroups, pharmacy })
