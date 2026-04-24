@@ -2,7 +2,6 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { RootLayout } from '@/layouts/RootLayout'
 import { PrivateRoute } from '@/components/shared/PrivateRoute'
 import { LoginPage } from '@/pages/auth/LoginPage'
-import { DashboardPage } from '@/pages/dashboard/DashboardPage'
 import { PurchasePage } from '@/pages/purchase/PurchasePage'
 import { OrderHistoryPage } from '@/pages/orders/OrderHistoryPage'
 import { OrderDetailPage } from '@/pages/orders/OrderDetailPage'
@@ -32,7 +31,7 @@ function App() {
           </PrivateRoute>
         }
       >
-        <Route index element={<DashboardPage />} />
+        <Route index element={<Navigate to="/purchase" replace />} />
         <Route path="purchase" element={<PurchasePage />} />
         <Route path="orders">
           <Route index element={<OrderHistoryPage />} />

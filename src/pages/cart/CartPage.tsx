@@ -4,6 +4,7 @@ import {
   ChevronDown, CheckCircle2, MapPin,
   Receipt, ArrowRight, Package,
 } from 'lucide-react'
+
 import { Link, useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { formatCurrency } from '@/lib/format'
@@ -21,17 +22,17 @@ interface ConfirmPayload { groups: DistGroup[]; pharmacy: Pharmacy }
 
 function QtyControl({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   return (
-    <div className="flex items-center rounded-lg border border-gray-200 bg-white">
+    <div className="flex w-[112px] shrink-0 items-center rounded-lg border border-gray-200 bg-white">
       <button
         onClick={() => onChange(Math.max(1, value - 1))}
-        className="flex h-8 w-8 items-center justify-center rounded-l-lg text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-l-lg text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
       >
         <Minus className="h-3 w-3" />
       </button>
-      <span className="w-9 text-center text-[13px] font-semibold text-gray-900">{value}</span>
+      <span className="flex-1 text-center text-[13px] font-semibold tabular-nums text-gray-900">{value}</span>
       <button
         onClick={() => onChange(value + 1)}
-        className="flex h-8 w-8 items-center justify-center rounded-r-lg text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-r-lg text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
       >
         <Plus className="h-3 w-3" />
       </button>
@@ -243,19 +244,44 @@ export function CartPage() {
     <div className="flex h-full flex-col overflow-hidden bg-white">
 
       {/* ── Шапка ── */}
-      <div className="shrink-0 border-b border-gray-200 bg-white px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      <div className="shrink-0 border-b border-gray-200 bg-white px-6 py-3">
+        <div className="flex items-center gap-4">
+          {/* Название + счётчик */}
+          <div className="flex items-center gap-2 shrink-0">
             <h1 className="text-xl font-bold text-gray-900">Корзина</h1>
-            <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600">
-              {totalItemsCount} поз.
-            </span>
           </div>
-          {/* Мини-итог справа */}
-          <div className="flex items-center gap-6 text-sm text-gray-500">
-            <span>{totalQtyCount} единиц</span>
-            <span>{groups.length} {groups.length === 1 ? 'оптовик' : 'оптовика'}</span>
+
+          <div className="h-5 w-px bg-gray-200 shrink-0" />
+
+          {/* Фильтр по оптовикам */}
+          <div className="flex flex-1 gap-1.5 overflow-x-auto">
+            <button
+              onClick={() => setDistFilter(null)}
+              className={cn(
+                'shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-all duration-150',
+                distFilter === null
+                  ? 'bg-gray-900 text-white shadow-sm'
+                  : 'border border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50',
+              )}
+            >
+              Все ({items.length})
+            </button>
+            {groups.map(g => (
+              <button
+                key={g.id}
+                onClick={() => setDistFilter(prev => prev === g.id ? null : g.id)}
+                className={cn(
+                  'shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-all duration-150',
+                  distFilter === g.id
+                    ? 'bg-gray-900 text-white shadow-sm'
+                    : 'border border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50',
+                )}
+              >
+                {g.name} ({g.items.length})
+              </button>
+            ))}
           </div>
+
         </div>
       </div>
 
@@ -265,176 +291,164 @@ export function CartPage() {
         {/* ── Левая панель ── */}
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
 
-          {/* Тулбар */}
-          <div className="shrink-0 border-b border-gray-200 bg-white px-5 py-3">
-            <div className="flex items-center gap-3">
-              <label className="flex cursor-pointer items-center gap-2 select-none">
-                <input
-                  ref={cbRef}
-                  type="checkbox"
-                  checked={allChecked}
-                  onChange={toggleAll}
-                  className="h-4 w-4 cursor-pointer rounded border-gray-300 accent-gray-900"
-                />
-                <span className="text-xs font-medium text-gray-500">Выбрать все</span>
-              </label>
+          {/* Таблица */}
+          <div className="flex-1 overflow-auto">
+            <table className="w-full border-collapse">
+              {/* Заголовки колонок */}
+              <thead className="sticky top-0 z-10 bg-white">
+                <tr className="h-12 border-b-2 border-gray-200">
+                  <th className="w-10 px-4 text-left">
+                    <input
+                      ref={cbRef}
+                      type="checkbox"
+                      checked={allChecked}
+                      onChange={toggleAll}
+                      className="h-4 w-4 cursor-pointer rounded border-gray-300 accent-gray-900"
+                    />
+                  </th>
+                  <th className="px-3 text-left text-sm font-semibold text-gray-700" colSpan={5}>Оптовик</th>
+                  <th className="w-[150px] px-3 text-right text-sm font-semibold text-gray-700">Сумма</th>
+                  <th className="w-10 px-4" />
+                </tr>
+              </thead>
 
-              <div className="h-4 w-px bg-gray-200" />
+              <tbody>
+                {filteredGroups.map(group => {
+                  const isCollapsed      = collapsed.has(group.id)
+                  const groupAllChecked  = group.items.every(i => checkedIds.has(i.offerId))
+                  const groupSomeChecked = group.items.some(i => checkedIds.has(i.offerId))
+                  const groupTotal       = group.items.reduce((s, i) => s + i.offer.priceWithVat * i.quantity, 0)
+                  const groupQtyTotal    = group.items.reduce((s, i) => s + i.quantity, 0)
 
-              {/* Фильтр по оптовикам */}
-              <div className="flex flex-1 gap-1.5 overflow-x-auto">
-                <button
-                  onClick={() => setDistFilter(null)}
-                  className={cn(
-                    'shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-all duration-150',
-                    distFilter === null
-                      ? 'bg-gray-900 text-white shadow-sm'
-                      : 'border border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50',
-                  )}
-                >
-                  Все ({items.length})
-                </button>
-                {groups.map(g => (
-                  <button
-                    key={g.id}
-                    onClick={() => setDistFilter(prev => prev === g.id ? null : g.id)}
-                    className={cn(
-                      'shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-all duration-150',
-                      distFilter === g.id
-                        ? 'bg-gray-900 text-white shadow-sm'
-                        : 'border border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50',
-                    )}
-                  >
-                    {g.name} ({g.items.length})
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+                  return (
+                    <>
+                      {/* ── Строка оптовика ── */}
+                      <tr key={`group-${group.id}`} className="border-t border-gray-200 bg-gray-100">
+                        <td className="px-4 py-2.5">
+                          <input
+                            type="checkbox"
+                            checked={groupAllChecked}
+                            ref={el => { if (el) el.indeterminate = groupSomeChecked && !groupAllChecked }}
+                            onChange={() => toggleGroup(group)}
+                            className="h-4 w-4 cursor-pointer rounded border-gray-300 accent-gray-900"
+                          />
+                        </td>
+                        <td className="px-3 py-2.5" colSpan={5}>
+                          <div className="flex items-center gap-2">
+                            <Package className="h-4 w-4 shrink-0 text-gray-600" />
+                            <span className="text-sm font-semibold text-gray-800">{group.name}</span>
+                            <span className="text-xs text-gray-500">
+                              {group.city} · {group.items.length} поз. · {groupQtyTotal} ед.
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2.5 text-right text-sm font-bold text-gray-800">
+                          {formatCurrency(groupTotal)}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <button
+                            onClick={() => toggleCollapse(group.id)}
+                            className="flex h-6 w-6 items-center justify-center rounded text-gray-400 transition-colors hover:bg-gray-200"
+                          >
+                            <ChevronDown className={cn('h-4 w-4 transition-transform duration-200', isCollapsed && '-rotate-90')} />
+                          </button>
+                        </td>
+                      </tr>
 
-          {/* Список групп */}
-          <div className="flex-1 overflow-y-auto px-5 py-4">
-            <div className="space-y-3">
-              {filteredGroups.map(group => {
-                const isCollapsed      = collapsed.has(group.id)
-                const groupAllChecked  = group.items.every(i => checkedIds.has(i.offerId))
-                const groupSomeChecked = group.items.some(i => checkedIds.has(i.offerId))
-                const groupTotal       = group.items.reduce((s, i) => s + i.offer.priceWithVat * i.quantity, 0)
-                const groupQtyTotal    = group.items.reduce((s, i) => s + i.quantity, 0)
+                      {/* ── Строки товаров ── */}
+                      {!isCollapsed && (
+                        <tr className="border-b border-gray-200 bg-white">
+                          <td className="px-4 py-2" />
+                          <td className="px-3 py-2 text-xs font-semibold text-gray-500">Название</td>
+                          <td className="px-3 py-2 text-xs font-semibold text-gray-500">Производитель</td>
+                          <td className="px-3 py-2 text-xs font-semibold text-gray-500">Страна</td>
+                          <td className="px-3 py-2 text-right text-xs font-semibold text-gray-500">Цена за шт.</td>
+                          <td className="px-3 py-2 text-center text-xs font-semibold text-gray-500">Количество</td>
+                          <td className="px-3 py-2 text-right text-xs font-semibold text-gray-500">Итог</td>
+                          <td className="px-4 py-2" />
+                        </tr>
+                      )}
+                      {!isCollapsed && group.items.map(item => {
+                        const isChecked = checkedIds.has(item.offerId)
+                        const lineTotal = item.offer.priceWithVat * item.quantity
 
-                return (
-                  <div key={group.id} className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-
-                    {/* Заголовок группы */}
-                    <div className="flex items-center gap-3 bg-gray-50 px-4 py-3.5">
-                      <input
-                        type="checkbox"
-                        checked={groupAllChecked}
-                        ref={el => { if (el) el.indeterminate = groupSomeChecked && !groupAllChecked }}
-                        onChange={() => toggleGroup(group)}
-                        className="h-4 w-4 cursor-pointer rounded border-gray-300 accent-gray-900"
-                      />
-
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white border border-gray-200">
-                        <Package className="h-4 w-4 text-gray-500" />
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 truncate">{group.name}</p>
-                        <p className="text-xs text-gray-400">{group.city} · {group.items.length} поз. · {groupQtyTotal} ед.</p>
-                      </div>
-
-                      <span className="text-sm font-bold text-gray-900 shrink-0">
-                        {formatCurrency(groupTotal)}
-                      </span>
-
-                      <button
-                        onClick={() => toggleCollapse(group.id)}
-                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-700"
-                      >
-                        <ChevronDown className={cn(
-                          'h-4 w-4 transition-transform duration-200',
-                          isCollapsed && '-rotate-90',
-                        )} />
-                      </button>
-                    </div>
-
-                    {/* Строки товаров */}
-                    {!isCollapsed && (
-                      <div className="divide-y divide-gray-100">
-                        {group.items.map((item) => {
-                          const isChecked = checkedIds.has(item.offerId)
-                          const lineTotal = item.offer.priceWithVat * item.quantity
-
-                          return (
-                            <div
-                              key={item.offerId}
-                              className={cn(
-                                'flex items-center gap-4 px-4 py-3.5 transition-colors duration-100',
-                                isChecked ? 'bg-gray-50' : 'bg-white hover:bg-gray-50/60',
-                              )}
-                            >
+                        return (
+                          <tr
+                            key={item.offerId}
+                            className={cn(
+                              'border-b border-gray-100 transition-colors duration-100',
+                              isChecked ? 'bg-gray-50' : 'bg-white hover:bg-gray-50',
+                            )}
+                          >
+                            {/* Чекбокс */}
+                            <td className="px-4 py-3">
                               <input
                                 type="checkbox"
                                 checked={isChecked}
                                 onChange={() => toggleItem(item.offerId)}
-                                className="h-4 w-4 shrink-0 cursor-pointer rounded border-gray-300 accent-gray-900"
+                                className="h-4 w-4 cursor-pointer rounded border-gray-300 accent-gray-900"
                               />
+                            </td>
 
-                              {/* Инфо о препарате */}
-                              <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-medium text-gray-900">
-                                  {item.medicine.name}
-                                </p>
-                                <div className="mt-0.5 flex items-center gap-2">
-                                  <span className="text-xs text-gray-400 truncate">
-                                    {item.medicine.manufacturer}
-                                  </span>
-                                  <span className="shrink-0 rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500">
-                                    {item.medicine.country}
-                                  </span>
-                                </div>
+                            {/* Название */}
+                            <td className="max-w-[220px] px-3 py-3">
+                              <p className="truncate text-sm font-medium text-gray-900">
+                                {item.medicine.name}
+                              </p>
+                            </td>
+
+                            {/* Производитель */}
+                            <td className="px-3 py-3">
+                              <span className="truncate text-sm text-gray-600">
+                                {item.medicine.manufacturer}
+                              </span>
+                            </td>
+
+                            {/* Страна */}
+                            <td className="px-3 py-3">
+                              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+                                {item.medicine.country}
+                              </span>
+                            </td>
+
+                            {/* Цена за шт */}
+                            <td className="px-3 py-3 text-right text-sm tabular-nums whitespace-nowrap text-gray-600">
+                              {formatCurrency(item.offer.priceWithVat)}
+                            </td>
+
+                            {/* Количество */}
+                            <td className="px-3 py-3">
+                              <div className="flex justify-center">
+                                <QtyControl
+                                  value={item.quantity}
+                                  onChange={v => v === 0 ? removeItem(item.offerId) : updateQty(item.offerId, v)}
+                                />
                               </div>
+                            </td>
 
-                              {/* Цена за шт */}
-                              <div className="hidden w-[110px] shrink-0 text-right lg:block">
-                                <p className="text-xs text-gray-400">за шт.</p>
-                                <p className="text-sm font-medium text-gray-700">
-                                  {formatCurrency(item.offer.priceWithVat)}
-                                </p>
-                              </div>
+                            {/* Сумма */}
+                            <td className="px-3 py-3 text-right text-sm font-semibold tabular-nums whitespace-nowrap text-gray-900">
+                              {formatCurrency(lineTotal)}
+                            </td>
 
-                              {/* Количество */}
-                              <QtyControl
-                                value={item.quantity}
-                                onChange={v => v === 0 ? removeItem(item.offerId) : updateQty(item.offerId, v)}
-                              />
-
-                              {/* Сумма */}
-                              <div className="w-[110px] shrink-0 text-right">
-                                <p className="text-xs text-gray-400">итого</p>
-                                <p className="text-sm font-bold text-gray-900">
-                                  {formatCurrency(lineTotal)}
-                                </p>
-                              </div>
-
-                              {/* Удалить */}
+                            {/* Удалить */}
+                            <td className="px-4 py-3">
                               <button
                                 onClick={() => removeItem(item.offerId)}
-                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-300 transition-colors hover:bg-red-50 hover:text-red-500"
+                                className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-300 transition-colors hover:bg-red-50 hover:text-red-500"
                                 aria-label="Удалить"
                               >
-                                <Trash2 className="h-[15px] w-[15px]" />
+                                <Trash2 className="h-[14px] w-[14px]" />
                               </button>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </>
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -442,7 +456,7 @@ export function CartPage() {
         <div className="flex w-[360px] shrink-0 flex-col overflow-hidden border-l border-gray-200 bg-white">
 
           {/* Заголовок */}
-          <div className="shrink-0 border-b border-gray-100 px-5 py-4">
+          <div className="flex h-12 shrink-0 items-center border-b border-gray-200 px-5">
             <div className="flex items-center gap-2">
               <Receipt className="h-4 w-4 text-gray-900" />
               <p className="text-sm font-bold text-gray-900">Оформление заказа</p>
@@ -464,8 +478,8 @@ export function CartPage() {
               <div className="flex-1 overflow-y-auto">
 
                 {/* Аптека */}
-                <div className="border-b border-gray-100 px-5 py-4">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                <div className="border-b border-gray-200 px-5 py-4">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-900">
                     Аптека получатель
                   </p>
                   <div className="relative">
@@ -485,29 +499,32 @@ export function CartPage() {
 
                 {/* Состав заказа */}
                 <div className="px-5 py-4">
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-900">
                     Состав заказа
                   </p>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {invoiceGroups.map(g => (
-                      <div key={g.id} className="overflow-hidden rounded-xl border border-gray-100 bg-gray-50">
-                        {/* Оптовик */}
-                        <div className="flex items-center justify-between px-3.5 py-2.5">
-                          <div>
-                            <p className="text-[13px] font-semibold text-gray-800">{g.name}</p>
+                      <div key={g.id} className="overflow-hidden rounded-xl border border-gray-200">
+                        {/* Оптовик — заголовок */}
+                        <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-3 py-2">
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-semibold text-gray-900">{g.name}</p>
+                            <p className="text-[11px] text-gray-400">{g.city}</p>
+                          </div>
+                          <div className="ml-2 shrink-0 text-right">
+                            <p className="text-xs font-bold text-gray-900">{formatCurrency(g.subtotal)}</p>
                             <p className="text-[11px] text-gray-400">{g.items.length} поз. · {g.qty} ед.</p>
                           </div>
-                          <span className="text-sm font-bold text-gray-900">{formatCurrency(g.subtotal)}</span>
                         </div>
                         {/* Позиции */}
-                        <div className="border-t border-gray-100 bg-white divide-y divide-gray-50">
+                        <div className="divide-y divide-gray-100 bg-white">
                           {g.items.map(item => (
-                            <div key={item.offerId} className="flex items-center gap-2 px-3.5 py-2">
+                            <div key={item.offerId} className="flex items-center gap-2 px-3 py-1.5">
                               <p className="min-w-0 flex-1 truncate text-xs text-gray-600">
                                 {item.medicine.name}
                               </p>
-                              <span className="shrink-0 text-xs text-gray-400">×{item.quantity}</span>
-                              <span className="shrink-0 w-20 text-right text-xs font-semibold text-gray-800">
+                              <span className="shrink-0 text-[11px] text-gray-400">×{item.quantity}</span>
+                              <span className="w-16 shrink-0 text-right text-xs font-medium text-gray-800">
                                 {formatCurrency(item.offer.priceWithVat * item.quantity)}
                               </span>
                             </div>
@@ -519,18 +536,20 @@ export function CartPage() {
                 </div>
 
                 {/* Статистика */}
-                <div className="border-t border-gray-100 px-5 py-4">
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { label: 'позиций',  value: invoiceItemCnt },
-                      { label: 'единиц',   value: invoiceQtyCnt },
-                      { label: invoiceGroups.length === 1 ? 'оптовик' : 'оптовика', value: invoiceGroups.length },
-                    ].map(stat => (
-                      <div key={stat.label} className="rounded-xl bg-gray-50 px-2 py-3 text-center">
-                        <p className="text-[17px] font-bold text-gray-900">{stat.value}</p>
-                        <p className="mt-0.5 text-[11px] text-gray-400">{stat.label}</p>
-                      </div>
-                    ))}
+                <div className="border-t border-gray-200 px-5 py-3">
+                  <div className="grid grid-cols-3 divide-x divide-gray-200 overflow-hidden rounded-xl border border-gray-200">
+                    <div className="flex flex-col items-center gap-0.5 py-2.5">
+                      <span className="text-sm font-bold tabular-nums text-gray-900">{invoiceItemCnt}</span>
+                      <span className="text-[11px] text-gray-400">позиций</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-0.5 py-2.5">
+                      <span className="text-sm font-bold tabular-nums text-gray-900">{invoiceQtyCnt}</span>
+                      <span className="text-[11px] text-gray-400">единиц</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-0.5 py-2.5">
+                      <span className="text-sm font-bold tabular-nums text-gray-900">{invoiceGroups.length}</span>
+                      <span className="text-[11px] text-gray-400">{invoiceGroups.length === 1 ? 'оптовик' : 'оптовика'}</span>
+                    </div>
                   </div>
                 </div>
               </div>
