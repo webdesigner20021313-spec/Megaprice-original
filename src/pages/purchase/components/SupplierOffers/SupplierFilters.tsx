@@ -158,7 +158,8 @@ export function SupplierFilters({
   bonusFilter, onBonus,
   distributors, cities,
   visibleColumns, onToggleColumn,
-}: SupplierFiltersProps) {
+  showColumnToggle = true,
+}: SupplierFiltersProps & { showColumnToggle?: boolean }) {
   const [openDist, setOpenDist]   = useState(false)
   const [openCity, setOpenCity]   = useState(false)
   const [openBonus, setOpenBonus] = useState(false)
@@ -291,7 +292,7 @@ export function SupplierFilters({
       )}
 
       {/* Column toggle */}
-      <div ref={colsRef} className="relative ml-auto">
+      {showColumnToggle && <div ref={colsRef} className="relative ml-auto">
         <button
           onClick={() => setOpenCols((v) => !v)}
           className={cn(
@@ -329,7 +330,7 @@ export function SupplierFilters({
             })}
           </div>
         )}
-      </div>
+      </div>}
     </div>
   )
 }

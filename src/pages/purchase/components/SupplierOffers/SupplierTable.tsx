@@ -128,7 +128,7 @@ export function SupplierTable({ offers, avgPrice, quantities, onQuantityChange, 
       const field = key === 'expiry' ? 'expiry' : 'price'
       return (
         <th key={key} {...dragProps}
-          style={{ ...thBase, ...borderStyle, cursor: 'grab', position: 'relative' }}
+          style={{ ...thBase, ...borderStyle, cursor: 'grab' }}
           onClick={() => onSort(field)}
         >
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, paddingRight: 8, cursor: 'pointer' }}>
@@ -142,7 +142,7 @@ export function SupplierTable({ offers, avgPrice, quantities, onQuantityChange, 
 
     return (
       <th key={key} {...dragProps}
-        style={{ ...thBase, ...borderStyle, cursor: 'grab', position: 'relative' }}
+        style={{ ...thBase, ...borderStyle, cursor: 'grab' }}
       >
         <span className="text-xs font-semibold uppercase tracking-wide text-gray-500" style={{ paddingRight: 8 }}>
           {COL_LABELS[key]}
@@ -153,11 +153,12 @@ export function SupplierTable({ offers, avgPrice, quantities, onQuantityChange, 
   }
 
   return (
-    <div style={{ height: '100%', overflowX: 'scroll', overflowY: 'scroll' }}>
-      <table style={{ tableLayout: 'fixed', width: tableWidth, borderCollapse: 'collapse' }}>
+    <div style={{ height: '100%', overflowX: 'auto', overflowY: 'auto' }}>
+      <table style={{ tableLayout: 'fixed', width: '100%', minWidth: tableWidth, borderCollapse: 'collapse' }}>
         <colgroup>
           <col style={{ width: cols.num }} />
           {visibleOrder.map((k) => <col key={k} style={{ width: cols[k] }} />)}
+          <col /> {/* spacer — поглощает лишнее пространство */}
           {col.quantity && <col style={{ width: cols.quantity }} />}
         </colgroup>
         <thead>
@@ -167,6 +168,9 @@ export function SupplierTable({ offers, avgPrice, quantities, onQuantityChange, 
             </th>
 
             {visibleOrder.map((k) => renderTh(k))}
+
+            {/* spacer th */}
+            <th style={{ ...thBase }} />
 
             {col.quantity && (
               <th style={{

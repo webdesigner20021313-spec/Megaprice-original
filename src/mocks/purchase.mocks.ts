@@ -43,21 +43,21 @@ export const mockMedicines: Medicine[] = [
 ]
 
 export const mockDistributors = [
-  { id: 'd1',  name: 'MEDSERVICE',      city: 'Алматы',    lastPriceDate: '2026-04-18' },
-  { id: 'd2',  name: 'PHARMEX',         city: 'Астана',    lastPriceDate: '2026-04-17' },
-  { id: 'd3',  name: 'TURON PHARM',     city: 'Ташкент',   lastPriceDate: '2026-04-19' },
-  { id: 'd4',  name: 'MEGA PHARM',      city: 'Ташкент',   lastPriceDate: '2026-04-15' },
-  { id: 'd5',  name: 'DOSTLIK FARM',    city: 'Бухара',    lastPriceDate: '2026-04-10' },
-  { id: 'd6',  name: 'BIOMED',          city: 'Алматы',    lastPriceDate: '2026-04-14' },
-  { id: 'd7',  name: 'ALFA PHARMA',     city: 'Самарканд', lastPriceDate: '2026-04-16' },
-  { id: 'd8',  name: 'CENTRAL PHARM',   city: 'Астана',    lastPriceDate: '2026-04-20' },
-  { id: 'd9',  name: 'ORIENT MED',      city: 'Наманган',  lastPriceDate: '2026-04-12' },
-  { id: 'd10', name: 'VITA PLUS',       city: 'Ташкент',   lastPriceDate: '2026-04-18' },
-  { id: 'd11', name: 'FARMAKON',        city: 'Алматы',    lastPriceDate: '2026-04-11' },
-  { id: 'd12', name: 'PROMEDICA',       city: 'Фергана',   lastPriceDate: '2026-04-09' },
-  { id: 'd13', name: 'SILK ROAD PHARM', city: 'Самарканд', lastPriceDate: '2026-04-13' },
-  { id: 'd14', name: 'HEALTH LINE',     city: 'Астана',    lastPriceDate: '2026-04-07' },
-  { id: 'd15', name: 'UZPHARM',         city: 'Ташкент',   lastPriceDate: '2026-04-20' },
+  { id: 'd1',  name: 'MEDSERVICE',      city: 'Алматы',    lastPriceDate: '2026-04-18', contactType: 'telegram' as const, contact: '@medservice_orders'    },
+  { id: 'd2',  name: 'PHARMEX',         city: 'Астана',    lastPriceDate: '2026-04-17', contactType: 'email'    as const, contact: 'orders@pharmex.uz'      },
+  { id: 'd3',  name: 'TURON PHARM',     city: 'Ташкент',   lastPriceDate: '2026-04-19', contactType: 'telegram' as const, contact: '@turonpharm_bot'        },
+  { id: 'd4',  name: 'MEGA PHARM',      city: 'Ташкент',   lastPriceDate: '2026-04-15', contactType: 'telegram' as const, contact: '@megapharm_orders'      },
+  { id: 'd5',  name: 'DOSTLIK FARM',    city: 'Бухара',    lastPriceDate: '2026-04-10', contactType: 'email'    as const, contact: 'zakaz@dostlikfarm.uz'   },
+  { id: 'd6',  name: 'BIOMED',          city: 'Алматы',    lastPriceDate: '2026-04-14', contactType: 'telegram' as const, contact: '@biomed_almaty'         },
+  { id: 'd7',  name: 'ALFA PHARMA',     city: 'Самарканд', lastPriceDate: '2026-04-16', contactType: 'email'    as const, contact: 'info@alfapharma.uz'     },
+  { id: 'd8',  name: 'CENTRAL PHARM',   city: 'Астана',    lastPriceDate: '2026-04-20', contactType: 'telegram' as const, contact: '@centralpharm_bot'      },
+  { id: 'd9',  name: 'ORIENT MED',      city: 'Наманган',  lastPriceDate: '2026-04-12', contactType: 'email'    as const, contact: 'orders@orientmed.uz'    },
+  { id: 'd10', name: 'VITA PLUS',       city: 'Ташкент',   lastPriceDate: '2026-04-18', contactType: 'telegram' as const, contact: '@vitaplus_orders'       },
+  { id: 'd11', name: 'FARMAKON',        city: 'Алматы',    lastPriceDate: '2026-04-11', contactType: 'email'    as const, contact: 'supply@farmakon.kz'     },
+  { id: 'd12', name: 'PROMEDICA',       city: 'Фергана',   lastPriceDate: '2026-04-09', contactType: 'telegram' as const, contact: '@promedica_fargona'     },
+  { id: 'd13', name: 'SILK ROAD PHARM', city: 'Самарканд', lastPriceDate: '2026-04-13', contactType: 'email'    as const, contact: 'orders@silkroadpharm.uz'},
+  { id: 'd14', name: 'HEALTH LINE',     city: 'Астана',    lastPriceDate: '2026-04-07', contactType: 'telegram' as const, contact: '@healthline_bot'        },
+  { id: 'd15', name: 'UZPHARM',         city: 'Ташкент',   lastPriceDate: '2026-04-20', contactType: 'email'    as const, contact: 'zakaz@uzpharm.uz'       },
 ]
 
 const distributors = mockDistributors

@@ -28,6 +28,8 @@ export interface Distributor {
   name: string
   city: string
   lastPriceDate: string
+  contactType: 'telegram' | 'email'
+  contact: string
 }
 
 export interface SupplierOffer {

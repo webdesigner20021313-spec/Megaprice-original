@@ -146,6 +146,9 @@ export function SupplierRow({ offer, index, avgPrice, quantity, onQuantityChange
 
       {colOrder.map((key) => renderCell(key))}
 
+      {/* spacer */}
+      <td style={{ borderBottom: '1px solid #f3f4f6' }} />
+
       {/* Количество — sticky right */}
       {col.quantity && (
         <td style={{

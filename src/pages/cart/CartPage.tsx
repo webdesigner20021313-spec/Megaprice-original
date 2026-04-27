@@ -1,8 +1,8 @@
-import { useState, useMemo, useCallback, useRef } from 'react'
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import {
   ShoppingCart, Trash2, Minus, Plus,
-  ChevronDown, CheckCircle2, MapPin,
-  Receipt, ArrowRight, Package,
+  ChevronDown, MapPin,
+  Receipt, ArrowRight, Package, Check, X,
 } from 'lucide-react'
 
 import { Link, useNavigate } from 'react-router-dom'
@@ -15,7 +15,7 @@ import type { CartItem, Pharmacy } from '@/pages/purchase/types/purchase.types'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface DistGroup { id: string; name: string; city: string; items: CartItem[] }
+interface DistGroup { id: string; name: string; city: string; items: CartItem[]; contactType: 'telegram' | 'email'; contact: string }
 interface ConfirmPayload { groups: DistGroup[]; pharmacy: Pharmacy }
 
 // ─── Qty Control ──────────────────────────────────────────────────────────────
@@ -65,57 +65,111 @@ function SuccessModal({ payload, onClose }: { payload: ConfirmPayload; onClose: 
   const totalSum = payload.groups.reduce(
     (s, g) => s + g.items.reduce((ss, i) => ss + i.offer.priceWithVat * i.quantity, 0), 0,
   )
+  const totalItems = payload.groups.reduce((s, g) => s + g.items.length, 0)
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
       <div className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-xl">
-        <div className="bg-[#F0FDF4] px-6 pb-5 pt-6">
-          <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-[#D1FAE5]">
-            <CheckCircle2 className="h-6 w-6 text-[#065F46]" />
+
+        {/* Кнопка закрыть */}
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+          aria-label="Закрыть"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        {/* Иконка + заголовок */}
+        <div className="flex flex-col items-center px-6 pt-8 pb-6 text-center">
+          <div className="relative mb-4 flex items-center justify-center">
+            <div className="absolute h-[80px] w-[80px] rounded-full border-[6px] border-green-100" />
+            <div className="relative flex h-[60px] w-[60px] items-center justify-center rounded-full bg-[#22C55E] shadow-md shadow-green-200">
+              <Check className="h-7 w-7 text-white" strokeWidth={2.5} />
+            </div>
           </div>
-          <p className="text-lg font-bold text-gray-900">Заказ успешно создан</p>
-          <p className="mt-0.5 text-sm text-gray-500">{payload.pharmacy.name}</p>
-          <div className="mt-4 flex items-center justify-between rounded-xl border border-[#BBF7D0] bg-white px-4 py-3">
-            <span className="text-xs text-gray-400">Номер заказа</span>
-            <span className="font-mono text-base font-bold text-gray-900">{orderNum}</span>
+          <p className="text-xl font-bold text-gray-900">Заказ успешно создан</p>
+          <p className="mt-1 text-sm text-gray-400">{payload.pharmacy.name}</p>
+        </div>
+
+        {/* Детали заказа */}
+        <div className="px-6 pb-4">
+          <div className="divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-100 bg-gray-50">
+            <div className="flex items-center justify-between px-4 py-3">
+              <span className="text-sm text-gray-500">Номер заказа</span>
+              <span className="font-mono text-sm font-bold text-gray-900">{orderNum}</span>
+            </div>
+            <div className="flex items-center justify-between px-4 py-3">
+              <span className="text-sm text-gray-500">Сумма заказа</span>
+              <span className="text-sm font-bold tabular-nums text-gray-900">{formatCurrency(totalSum)}</span>
+            </div>
+            <div className="flex items-center justify-between px-4 py-3">
+              <span className="text-sm text-gray-500">Позиций</span>
+              <span className="text-sm font-bold text-gray-900">{totalItems}</span>
+            </div>
           </div>
         </div>
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between py-1">
-            <span className="text-sm text-gray-500">Сумма заказа</span>
-            <span className="text-sm font-bold text-gray-900">{formatCurrency(totalSum)}</span>
-          </div>
-          <div className="my-3 border-t border-gray-100" />
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-            Отправлено в Telegram
+
+        {/* Оптовики + каналы */}
+        <div className="px-6 pb-6">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
+            Уведомления отправлены
           </p>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {payload.groups.map(group => (
-              <div key={group.id} className="flex items-center gap-3 rounded-lg bg-gray-50 px-3 py-2.5">
-                <CheckCircle2 className="h-4 w-4 shrink-0 text-[#22C55E]" />
-                <span className="min-w-0 flex-1 truncate text-sm font-medium text-gray-800">{group.name}</span>
+              <div key={group.id} className="flex items-start gap-3 rounded-xl bg-gray-50 px-3 py-3">
+                {/* Галочка */}
+                <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#22C55E]">
+                  <Check className="h-3 w-3 text-white" strokeWidth={2.5} />
+                </div>
+                {/* Название + канал */}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-gray-800">{group.name}</p>
+                  <div className="mt-1 flex items-center gap-1.5">
+                    {group.contactType === 'telegram' ? (
+                      <>
+                        <svg className="h-3 w-3 shrink-0 text-sky-500" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L8.32 13.617l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.828.942z" />
+                        </svg>
+                        <span className="text-xs text-sky-500">{group.contact}</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="h-3 w-3 shrink-0 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="2" y="4" width="20" height="16" rx="2" />
+                          <path d="m2 7 10 7 10-7" />
+                        </svg>
+                        <span className="text-xs text-gray-400">{group.contact}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                {/* Кол-во позиций */}
                 <span className="shrink-0 text-xs text-gray-400">
-                  {group.items.length} поз. · {group.items.reduce((s, i) => s + i.quantity, 0)} ед.
+                  {group.items.length} поз.
                 </span>
               </div>
             ))}
           </div>
         </div>
-        <div className="flex gap-2.5 border-t border-gray-100 px-6 py-4">
+
+        {/* Кнопки */}
+        <div className="flex gap-3 border-t border-gray-100 px-6 py-4">
           <button
             onClick={() => { onClose(); navigate('/orders') }}
-            className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
           >
             Мои заказы <ArrowRight className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={onClose}
-            className="flex h-10 flex-1 items-center justify-center rounded-xl bg-gray-900 text-sm font-semibold text-white transition-colors hover:bg-black"
+            className="flex h-11 flex-1 items-center justify-center rounded-xl bg-gray-900 text-sm font-semibold text-white transition-colors hover:bg-black"
           >
             Готово
           </button>
         </div>
+
       </div>
     </div>
   )
@@ -133,14 +187,16 @@ export function CartPage() {
   const [successPayload, setSuccessPayload] = useState<ConfirmPayload | null>(null)
   const [distFilter,     setDistFilter]     = useState<string | null>(null)
   const [collapsed,      setCollapsed]      = useState<Set<string>>(new Set())
+  const [showPharmacyDrop, setShowPharmacyDrop] = useState(false)
+  const pharmacyDropRef = useRef<HTMLDivElement>(null)
 
   const pharmacy = mockPharmacies.find(p => p.id === pharmacyId) ?? mockPharmacies[0]
 
   const groups = useMemo((): DistGroup[] => {
     const map = new Map<string, DistGroup>()
     for (const item of items) {
-      const { id, name, city } = item.offer.distributor
-      if (!map.has(id)) map.set(id, { id, name, city, items: [] })
+      const { id, name, city, contactType, contact } = item.offer.distributor
+      if (!map.has(id)) map.set(id, { id, name, city, contactType, contact, items: [] })
       map.get(id)!.items.push(item)
     }
     return Array.from(map.values())
@@ -191,6 +247,15 @@ export function CartPage() {
   const someChecked = !allChecked && filteredItems.some(i => checkedIds.has(i.offerId))
   const cbRef = useRef<HTMLInputElement>(null)
   if (cbRef.current) cbRef.current.indeterminate = someChecked
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (pharmacyDropRef.current && !pharmacyDropRef.current.contains(e.target as Node))
+        setShowPharmacyDrop(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
 
   const invoiceGroups = useMemo(() =>
     groups
@@ -452,12 +517,36 @@ export function CartPage() {
         {/* ── Правая панель: инвойс ── */}
         <div className="flex w-[360px] shrink-0 flex-col overflow-hidden border-l border-gray-200 bg-white">
 
-          {/* Заголовок */}
-          <div className="flex h-12 shrink-0 items-center border-b border-gray-200 px-4">
-            <div className="flex items-center gap-2">
-              <Receipt className="h-4 w-4 text-gray-900" />
-              <p className="text-sm font-bold text-gray-900">Оформление заказа</p>
-            </div>
+          {/* Заголовок — выбор аптеки */}
+          <div ref={pharmacyDropRef} className="relative shrink-0">
+            <button
+              onClick={() => setShowPharmacyDrop(v => !v)}
+              className="flex h-12 w-full items-center justify-between border-b border-gray-200 px-4 transition-colors hover:bg-gray-50"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <MapPin className="h-4 w-4 shrink-0 text-gray-500" />
+                <span className="truncate text-sm font-semibold text-gray-900">{pharmacy.name}</span>
+              </div>
+              <ChevronDown className={cn('h-4 w-4 shrink-0 text-gray-400 transition-transform duration-150', showPharmacyDrop && 'rotate-180')} />
+            </button>
+
+            {showPharmacyDrop && (
+              <div className="absolute left-0 right-0 top-full z-50 border-b border-gray-200 bg-white shadow-md">
+                {mockPharmacies.map(p => (
+                  <button
+                    key={p.id}
+                    onClick={() => { setPharmacyId(p.id); setShowPharmacyDrop(false) }}
+                    className={cn(
+                      'flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-50',
+                      p.id === pharmacyId ? 'font-semibold text-gray-900' : 'text-gray-600'
+                    )}
+                  >
+                    <MapPin className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {!hasSelection ? (
@@ -472,37 +561,42 @@ export function CartPage() {
             </div>
           ) : (
             <>
-              <div className="flex-1 overflow-y-auto">
+              {/* ── Верхняя фикс. часть ── */}
+              <div className="shrink-0 border-b border-gray-200">
 
-                {/* Аптека */}
-                <div className="border-b border-gray-200 px-4 py-4">
-                  <p className="mb-2 text-xs font-semibold tracking-wider text-gray-900">
-                    Аптека получатель
-                  </p>
-                  <div className="relative">
-                    <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    <select
-                      value={pharmacyId}
-                      onChange={e => setPharmacyId(e.target.value)}
-                      className="h-10 w-full appearance-none rounded-xl border border-gray-200 bg-gray-50 pl-9 pr-8 text-sm font-medium text-gray-900 transition-colors hover:border-gray-300 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-                    >
-                      {mockPharmacies.map(p => (
-                        <option key={p.id} value={p.id}>{p.name}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                {/* Итого — главное вверху */}
+                <div className="px-4 pt-4 pb-0">
+                  <p className="text-xs text-gray-400 mb-1">Итого к оплате</p>
+                  <p className="text-[28px] font-bold tabular-nums text-gray-900 leading-none">{formatCurrency(invoiceTotal)}</p>
+                </div>
+
+                {/* Детали */}
+                <div className="px-4 pb-3 pt-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-600">Позиций</span>
+                    <span className="text-xs tabular-nums text-gray-600">{invoiceItemCnt}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-600">Единиц товара</span>
+                    <span className="text-xs tabular-nums text-gray-600">{invoiceQtyCnt}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-600">Оптовиков</span>
+                    <span className="text-xs tabular-nums text-gray-600">{invoiceGroups.length}</span>
                   </div>
                 </div>
 
-                {/* Состав заказа */}
-                <div className="px-4 py-4">
-                  <p className="mb-2 text-xs font-semibold tracking-wider text-gray-900">
+              </div>
+
+              {/* ── Скролл: список продуктов ── */}
+              <div className="flex-1 overflow-y-auto">
+                <div className="px-4 py-3">
+                  <p className="mb-2 text-xs font-semibold text-gray-900">
                     Состав заказа
                   </p>
                   <div className="space-y-3">
                     {invoiceGroups.map(g => (
-                      <div key={g.id} className="overflow-hidden rounded-xl border border-gray-200">
-                        {/* Оптовик — заголовок */}
+                      <div key={g.id} className="overflow-hidden rounded-lg border border-gray-200">
                         <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-3 py-2">
                           <div className="min-w-0">
                             <p className="truncate text-xs font-semibold text-gray-900">{g.name}</p>
@@ -513,7 +607,6 @@ export function CartPage() {
                             <p className="text-[11px] text-gray-400">{g.items.length} поз. · {g.qty} ед.</p>
                           </div>
                         </div>
-                        {/* Позиции */}
                         <div className="divide-y divide-gray-100 bg-white">
                           {g.items.map(item => (
                             <div key={item.offerId} className="flex items-center gap-2 px-3 py-1.5">
@@ -531,28 +624,16 @@ export function CartPage() {
                     ))}
                   </div>
                 </div>
-
               </div>
 
-              {/* Итого + кнопка */}
-              <div className="shrink-0 border-t border-gray-200 bg-white">
-                <div className="flex items-center justify-between px-4 pt-3 pb-3">
-                  <div>
-                    <p className="text-sm text-gray-500">Итого к оплате</p>
-                    <p className="text-xs text-gray-400 tabular-nums">
-                      {invoiceItemCnt} поз. · {invoiceQtyCnt} ед. · {invoiceGroups.length} {invoiceGroups.length === 1 ? 'оптовик' : 'оптовика'}
-                    </p>
-                  </div>
-                  <span className="text-[22px] font-bold text-gray-900">{formatCurrency(invoiceTotal)}</span>
-                </div>
-                <div className="px-4 pb-4">
-                  <button
-                    onClick={createOrder}
-                    className="flex h-11 w-full items-center justify-center rounded-xl bg-gray-900 text-sm font-semibold text-white transition-colors hover:bg-black"
-                  >
-                    Создать заказ
-                  </button>
-                </div>
+              {/* ── Фикс. кнопка внизу ── */}
+              <div className="shrink-0 border-t border-gray-200 bg-white px-4 py-4">
+                <button
+                  onClick={createOrder}
+                  className="flex h-11 w-full items-center justify-center rounded-xl bg-gray-900 text-sm font-semibold text-white transition-colors hover:bg-black"
+                >
+                  Создать заказ
+                </button>
               </div>
             </>
           )}
