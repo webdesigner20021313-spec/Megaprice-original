@@ -18,6 +18,13 @@ const bonusOptions: { value: BonusType; label: string }[] = [
   { value: 'free_delivery', label: 'Беспл. доставка' },
   { value: 'discount',      label: 'Скидка'          },
 ]
+const visibleColumns: Record<ColumnKey, boolean> = {
+  expiry: true,
+  payment: true,
+  price: true,
+  bonus: true,
+  quantity: true,
+}
 
 // ─── useClickOutside ──────────────────────────────────────────────────────────
 function useClickOutside(onClose: () => void) {
@@ -789,7 +796,7 @@ export function NeedPage() {
               preFilteredOffers={preFilteredOffers}
               avgPrice={avgPrice}
               medicine={selectedMedicine}
-              //visibleColumns={visibleColumns}
+              visibleColumns={visibleColumns}
               isLoading={isLoading}
             />
           </div>
