@@ -789,7 +789,7 @@ export function NeedPage() {
               preFilteredOffers={preFilteredOffers}
               avgPrice={avgPrice}
               medicine={selectedMedicine}
-              visibleColumns={visibleColumns}
+              //visibleColumns={visibleColumns}
               isLoading={isLoading}
             />
           </div>
