@@ -785,13 +785,13 @@ export function NeedPage() {
             className="flex flex-col overflow-hidden border-b border-gray-200"
             style={{ height: `${vertSplitPct}%`, minHeight: 120 }}
           >
-            //<NeedSupplierPanel
+            <NeedSupplierPanel
               //preFilteredOffers={preFilteredOffers}
               //avgPrice={avgPrice}
               //medicine={selectedMedicine}
               //visibleColumns={visibleColumns}
               //isLoading={isLoading}
-            // />
+            />
           </div>
 
           {/* ── Resize handle: вертикальный ── */}
