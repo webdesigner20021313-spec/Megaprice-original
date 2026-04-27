@@ -432,7 +432,7 @@ export function CartPage() {
                             <td className="px-4 py-3">
                               <button
                                 onClick={() => removeItem(item.offerId)}
-                                className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-300 transition-colors hover:bg-red-50 hover:text-red-500"
+                                className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
                                 aria-label="Удалить"
                               >
                                 <Trash2 className="h-[14px] w-[14px]" />
@@ -453,7 +453,7 @@ export function CartPage() {
         <div className="flex w-[360px] shrink-0 flex-col overflow-hidden border-l border-gray-200 bg-white">
 
           {/* Заголовок */}
-          <div className="flex h-12 shrink-0 items-center border-b border-gray-200 px-5">
+          <div className="flex h-12 shrink-0 items-center border-b border-gray-200 px-4">
             <div className="flex items-center gap-2">
               <Receipt className="h-4 w-4 text-gray-900" />
               <p className="text-sm font-bold text-gray-900">Оформление заказа</p>
@@ -461,7 +461,7 @@ export function CartPage() {
           </div>
 
           {!hasSelection ? (
-            <div className="flex flex-1 flex-col items-center justify-center gap-3 px-8 text-center">
+            <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-dashed border-gray-200">
                 <Receipt className="h-7 w-7 text-gray-300" />
               </div>
@@ -475,8 +475,8 @@ export function CartPage() {
               <div className="flex-1 overflow-y-auto">
 
                 {/* Аптека */}
-                <div className="border-b border-gray-200 px-5 py-4">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-900">
+                <div className="border-b border-gray-200 px-4 py-4">
+                  <p className="mb-2 text-xs font-semibold tracking-wider text-gray-900">
                     Аптека получатель
                   </p>
                   <div className="relative">
@@ -495,8 +495,8 @@ export function CartPage() {
                 </div>
 
                 {/* Состав заказа */}
-                <div className="px-5 py-4">
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-900">
+                <div className="px-4 py-4">
+                  <p className="mb-2 text-xs font-semibold tracking-wider text-gray-900">
                     Состав заказа
                   </p>
                   <div className="space-y-3">
@@ -532,32 +532,20 @@ export function CartPage() {
                   </div>
                 </div>
 
-                {/* Статистика */}
-                <div className="border-t border-gray-200 px-5 py-3">
-                  <div className="grid grid-cols-3 divide-x divide-gray-200 overflow-hidden rounded-xl border border-gray-200">
-                    <div className="flex flex-col items-center gap-0.5 py-2.5">
-                      <span className="text-sm font-bold tabular-nums text-gray-900">{invoiceItemCnt}</span>
-                      <span className="text-[11px] text-gray-400">позиций</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-0.5 py-2.5">
-                      <span className="text-sm font-bold tabular-nums text-gray-900">{invoiceQtyCnt}</span>
-                      <span className="text-[11px] text-gray-400">единиц</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-0.5 py-2.5">
-                      <span className="text-sm font-bold tabular-nums text-gray-900">{invoiceGroups.length}</span>
-                      <span className="text-[11px] text-gray-400">{invoiceGroups.length === 1 ? 'оптовик' : 'оптовика'}</span>
-                    </div>
-                  </div>
-                </div>
               </div>
 
               {/* Итого + кнопка */}
               <div className="shrink-0 border-t border-gray-200 bg-white">
-                <div className="flex items-center justify-between px-5 py-4">
-                  <span className="text-sm text-gray-500">Итого к оплате</span>
+                <div className="flex items-center justify-between px-4 pt-3 pb-3">
+                  <div>
+                    <p className="text-sm text-gray-500">Итого к оплате</p>
+                    <p className="text-xs text-gray-400 tabular-nums">
+                      {invoiceItemCnt} поз. · {invoiceQtyCnt} ед. · {invoiceGroups.length} {invoiceGroups.length === 1 ? 'оптовик' : 'оптовика'}
+                    </p>
+                  </div>
                   <span className="text-[22px] font-bold text-gray-900">{formatCurrency(invoiceTotal)}</span>
                 </div>
-                <div className="px-5 pb-5">
+                <div className="px-4 pb-4">
                   <button
                     onClick={createOrder}
                     className="flex h-11 w-full items-center justify-center rounded-xl bg-gray-900 text-sm font-semibold text-white transition-colors hover:bg-black"
