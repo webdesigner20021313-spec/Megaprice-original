@@ -786,11 +786,11 @@ export function NeedPage() {
             style={{ height: `${vertSplitPct}%`, minHeight: 120 }}
           >
             <NeedSupplierPanel
-              //preFilteredOffers={preFilteredOffers}
-              //avgPrice={avgPrice}
-              //medicine={selectedMedicine}
-              //visibleColumns={visibleColumns}
-              //isLoading={isLoading}
+              preFilteredOffers={preFilteredOffers}
+              avgPrice={avgPrice}
+              medicine={selectedMedicine}
+              visibleColumns={visibleColumns}
+              isLoading={isLoading}
             />
           </div>
 
