@@ -470,9 +470,9 @@ export function NeedPage() {
   const [distributorFilter, setDistributorFilter] = useState<string[]>([])
   const [cityFilter,        setCityFilter]        = useState<string[]>([])
   const [bonusFilter,       setBonusFilter]       = useState<BonusType[]>([])
-  const [visibleColumns, setVisibleColumns]       = useState<Record<ColumnKey, boolean>>({
-    expiry: true, payment: true, price: true, bonus: true, quantity: true,
-  })
+  //const [visibleColumns, setVisibleColumns]       = useState<Record<ColumnKey, boolean>>({
+    //expiry: true, payment: true, price: true, bonus: true, quantity: true,
+  //})
 
   // ── Dropdown open states ──
   const [openDist,  setOpenDist]  = useState(false)
