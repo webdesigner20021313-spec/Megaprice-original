@@ -108,11 +108,6 @@ export function PostMedicineList({ selectedMedicine, onSelect, showFavorites }: 
     }
   }, [allChecked, filtered])
 
-  function handleSync() {
-    setSyncing(true)
-    setTimeout(() => setSyncing(false), 1400)
-  }
-
   // Авто-подбор: добавляем в корзину с нужным количеством
   function handleAutoSelectConfirm(results: { medicine: Medicine; offer: SupplierOffer | null }[]) {
     results.forEach(({ medicine, offer }) => {
