@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import {
-  Search, X, AlertTriangle, Package,
-  ChevronDown, Check, Zap, TrendingDown,
+  Search, X, Package, Building2,
+  ChevronDown, Check, Zap, TrendingDown, Eye, Plus,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatCurrency } from '@/lib/format'
@@ -13,21 +13,91 @@ import { usePurchaseCart } from '@/pages/purchase/hooks/usePurchaseCart'
 
 type ScenarioKey = 'urgent' | 'oos' | 'overstock' | 'dead' | 'all'
 type PeriodKey   = 'week' | 'month' | 'quarter' | 'year'
-type ColKey      = 'status' | 'stock' | 'doc' | 'sales' | 'need' | 'financial'
+type ColKey      = 'status' | 'stock' | 'doc' | 'sales' | 'need'
+interface PharmacyBreakdown {
+  id: string
+  name: string
+  stock: number
+  sales30d: number
+  avgDailySales: number
+  daysOfCover: number
+  status: NeedStatus
+}
 
-// ─── Custom icon: ShoppingCart + Plus ────────────────────────────────────────
+// ─── Pharmacy list ────────────────────────────────────────────────────────────
 
-function CartPlusIcon({ className }: { className?: string }) {
+const PHARMACIES: { id: string; name: string }[] = [
+  { id: 'ph1', name: 'Дорилар дунёси (Мирабад)' },
+  { id: 'ph2', name: 'Шифо (Юнусабад)' },
+  { id: 'ph3', name: 'Здоровье (Чиланзар)' },
+  { id: 'ph4', name: 'Hayot Dori (Самарканд)' },
+  { id: 'ph5', name: 'Nasiba Dori (Фергана)' },
+  { id: 'ph6', name: 'Дорихона (Ташкент)' },
+  { id: 'ph7', name: 'Медикус (Андижан)' },
+]
+
+function getItemPharmacies(item: NeedItem): PharmacyBreakdown[] {
+  const seed      = item.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
+  const baseFracs = [0.26, 0.22, 0.19, 0.14, 0.10, 0.06, 0.03]
+  return PHARMACIES.map((ph, i) => {
+    const fi            = (i + seed) % baseFracs.length
+    const frac          = baseFracs[fi]
+    const sales30d      = Math.max(0, Math.round(item.sales30d * frac))
+    const avgDailySales = parseFloat((item.avgDailySales * frac).toFixed(1))
+    const stockBase     = item.status === 'oos' ? 0 : item.stock * frac * (1 + ((seed + i) % 3) * 0.15)
+    const stock         = Math.round(stockBase)
+    const daysOfCover   = avgDailySales > 0 ? stock / avgDailySales : 0
+    let status: NeedStatus
+    if (stock === 0) status = 'oos'
+    else if (daysOfCover < 7) status = 'critical'
+    else if (daysOfCover > 30) status = 'overstock'
+    else status = 'normal'
+    return { ...ph, stock, sales30d, avgDailySales, daysOfCover, status }
+  })
+}
+
+// ─── Per-pharmacy item transformation ────────────────────────────────────────
+
+function getPharmacyItems(pharmacyId: string): NeedItem[] {
+  return mockNeedItems.flatMap(item => {
+    const phData = getItemPharmacies(item).find(ph => ph.id === pharmacyId)
+    if (!phData || (phData.stock === 0 && phData.sales30d === 0)) return []
+    const salesRatio = item.avgDailySales > 0 ? phData.avgDailySales / item.avgDailySales : 0
+    return [{
+      ...item,
+      stock:            phData.stock,
+      avgDailySales:    phData.avgDailySales,
+      sales30d:         phData.sales30d,
+      sales7d:          Math.round(item.sales7d * salesRatio),
+      daysOfCover:      phData.daysOfCover,
+      status:           phData.status,
+      optimalStock:     Math.max(1, Math.round(item.optimalStock * salesRatio)),
+      lostRevenuePerDay: phData.status === 'oos' ? item.lostRevenuePerDay * salesRatio : 0,
+      frozenAmount:     (phData.status === 'overstock' || phData.status === 'dead')
+        ? item.frozenAmount * (item.stock > 0 ? phData.stock / item.stock : 0)
+        : 0,
+      recommendedQty:   Math.max(0, Math.ceil(phData.avgDailySales * 7) - phData.stock),
+    }]
+  })
+}
+
+// ─── InfoTooltip ─────────────────────────────────────────────────────────────
+
+function InfoTooltip({ text }: { text: string }) {
+  const [show, setShow] = useState(false)
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-      className={className}>
-      <circle cx="8" cy="21" r="1" />
-      <circle cx="19" cy="21" r="1" />
-      <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
-      <line x1="12" y1="8" x2="12" y2="14" />
-      <line x1="9" y1="11" x2="15" y2="11" />
-    </svg>
+    <div className="relative"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}>
+      <div className="flex h-4 w-4 cursor-default select-none items-center justify-center rounded-full bg-gray-400 hover:bg-gray-500 transition-colors">
+        <span className="text-[9px] font-bold leading-none text-white">!</span>
+      </div>
+      {show && (
+        <div className="absolute right-0 top-5 z-50 w-52 rounded-lg bg-gray-900 p-2.5 shadow-lg">
+          <p className="text-xs leading-snug text-white">{text}</p>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -50,10 +120,10 @@ function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => v
 const MONTHS_SHORT = ['Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек', 'Янв', 'Фев', 'Мар', 'Апр']
 
 const STATUS_CFG: Record<NeedStatus, { label: string; badgeCls: string; borderColor: string; rowBg: string }> = {
-  oos:       { label: 'Out of Stock',  badgeCls: 'bg-[#FEE2E2] text-[#991B1B]', borderColor: '#EF4444', rowBg: '#FFF8F8' },
+  oos:       { label: 'Нет в наличии', badgeCls: 'bg-[#FEE2E2] text-[#991B1B]', borderColor: '#EF4444', rowBg: '#FFF8F8' },
   critical:  { label: 'Критично',      badgeCls: 'bg-[#FEF3C7] text-[#92400E]', borderColor: '#F59E0B', rowBg: '' },
   normal:    { label: 'В норме',       badgeCls: 'bg-[#D1FAE5] text-[#065F46]', borderColor: '#10B981', rowBg: '' },
-  overstock: { label: 'Overstock',     badgeCls: 'bg-[#DBEAFE] text-[#1E40AF]', borderColor: '#3B82F6', rowBg: '' },
+  overstock: { label: 'Избыток',       badgeCls: 'bg-[#DBEAFE] text-[#1E40AF]', borderColor: '#3B82F6', rowBg: '' },
   dead:      { label: 'Мёртвый сток',  badgeCls: 'bg-[#F3F4F6] text-[#374151]', borderColor: '#9CA3AF', rowBg: '' },
 }
 
@@ -77,22 +147,23 @@ const PERIODS: { key: PeriodKey; label: string; days: number }[] = [
 const GROUPS = Array.from(new Set(mockNeedItems.map(i => i.group))).sort()
 
 const COL_LABELS: Record<ColKey, string> = {
-  status:    'Статус',
-  stock:     'Остаток',
-  doc:       'Покрытие',
-  sales:     'Прод./день',
-  need:      'Заказать',
-  financial: 'Потери / Заморожено',
+  status: 'Статус',
+  stock:  'Остаток',
+  doc:    'Хватит на',
+  sales:  'Продажи/дн.',
+  need:   'Нужно заказать',
 }
 
-const DEFAULT_ORDER: ColKey[] = ['status', 'stock', 'doc', 'sales', 'need', 'financial']
+const DEFAULT_ORDER: ColKey[] = ['status', 'stock', 'doc', 'sales', 'need']
 
 type ColWidths = Record<ColKey, number>
-const INIT_WIDTHS: ColWidths = { status: 114, stock: 72, doc: 136, sales: 88, need: 80, financial: 132 }
+const INIT_WIDTHS: ColWidths = { status: 180, stock: 180, doc: 180, sales: 180, need: 180 }
 
 const COL_CB     = 40
+const COL_MFR    = 280
 const COL_ACTION = 52
 const MIN_NAME   = 180
+const DRAWER_W   = 580
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -105,81 +176,125 @@ function calcKpi(items: NeedItem[], periodDays: number) {
   const oos       = items.filter(i => i.status === 'oos')
   const critical  = items.filter(i => i.status === 'critical')
   const overstock = items.filter(i => i.status === 'overstock' || i.status === 'dead')
-  const lostPerDay  = oos.reduce((s, i) => s + i.lostRevenuePerDay, 0)
-  const frozenTotal = overstock.reduce((s, i) => s + i.frozenAmount, 0)
-  const orderTotal  = items.reduce((s, i) => s + calcRecommendedQty(i, periodDays) * i.costPrice, 0)
-  const orderCount  = items.filter(i => calcRecommendedQty(i, periodDays) > 0).length
-  const withDOC     = items.filter(i => i.status !== 'oos' && i.status !== 'dead')
-  const avgDOC      = withDOC.length ? withDOC.reduce((s, i) => s + i.daysOfCover, 0) / withDOC.length : 0
-  return { oos, critical, overstock, lostPerDay, frozenTotal, orderTotal, orderCount, avgDOC }
+  const urgent    = items.filter(i => i.status === 'oos' || i.status === 'critical')
+  const lostPerDay     = oos.reduce((s, i) => s + i.lostRevenuePerDay, 0)
+  const frozenTotal    = overstock.reduce((s, i) => s + i.frozenAmount, 0)
+  const orderTotal     = items.reduce((s, i) => s + calcRecommendedQty(i, periodDays) * i.costPrice, 0)
+  const orderCount     = items.filter(i => calcRecommendedQty(i, periodDays) > 0).length
+  const urgentTotal    = urgent.reduce((s, i) => s + calcRecommendedQty(i, periodDays) * i.costPrice, 0)
+  const urgentCount    = urgent.filter(i => calcRecommendedQty(i, periodDays) > 0).length
+  return { oos, critical, overstock, lostPerDay, frozenTotal, orderTotal, orderCount, urgentTotal, urgentCount }
 }
 
 function defaultSort(a: NeedItem, b: NeedItem) {
   const so = STATUS_ORDER[a.status] - STATUS_ORDER[b.status]
   if (so !== 0) return so
-  if (a.status === 'critical') return a.daysOfCover - b.daysOfCover
-  if (a.status === 'overstock') return b.daysOfCover - a.daysOfCover
-  return 0
+  return b.avgDailySales - a.avgDailySales
 }
 
 function getBestOffer(medicineId: string) {
-  return mockSupplierOffers.filter(o => o.medicineId === medicineId).sort((a, b) => a.priceWithVat - b.priceWithVat)[0] ?? null
+  return mockSupplierOffers
+    .filter(o => o.medicineId === medicineId)
+    .sort((a, b) => a.priceWithVat - b.priceWithVat)[0] ?? null
 }
 
-// ─── DOC Bar ─────────────────────────────────────────────────────────────────
+// ─── DocBar ───────────────────────────────────────────────────────────────────
 
 function DocBar({ days }: { days: number }) {
-  if (days === 0)   return <span className="text-xs font-bold text-red-500">OOS</span>
-  if (days > 99)    return <span className="text-xs text-gray-400">{Math.round(days)} дн.</span>
-  const color = days < 3 ? '#EF4444' : days < 7 ? '#F59E0B' : days <= 30 ? '#10B981' : '#3B82F6'
-  const pct   = Math.min(100, (days / 30) * 100)
+  return <span className="text-sm text-gray-700 tabular-nums">{Math.round(days)} дн.</span>
+}
+
+// ─── MiniBarChart with hover tooltip ─────────────────────────────────────────
+
+function MiniBarChart({ data }: { data: number[] }) {
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [chartW, setChartW] = useState(296)
+
+  useEffect(() => {
+    if (!containerRef.current) return
+    const ro = new ResizeObserver(e => setChartW(Math.floor(e[0].contentRect.width)))
+    ro.observe(containerRef.current)
+    return () => ro.disconnect()
+  }, [])
+
+  const max = Math.max(...data, 1)
+  const W = chartW; const H = 72; const gap = 3
+  const bw = Math.floor((W - gap * (data.length - 1)) / data.length)
+
+  const hovBh    = hoveredIdx !== null ? Math.max(3, (data[hoveredIdx] / max) * H) : 0
+  const tooltipX = hoveredIdx !== null ? hoveredIdx * (bw + gap) + bw / 2 : 0
+  const tooltipY = hoveredIdx !== null ? H - hovBh - 26 : 0
+
   return (
-    <div className="flex items-center gap-2">
-      <div style={{ width: 48, height: 4, background: '#F3F4F6', borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
-        <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 2 }} />
-      </div>
-      <span style={{ color, fontSize: 12, fontWeight: 600 }}>{Math.round(days)} дн.</span>
+    <div ref={containerRef} style={{ position: 'relative', width: '100%', userSelect: 'none' }}>
+      {hoveredIdx !== null && (
+        <div style={{
+          position: 'absolute',
+          left: tooltipX,
+          top: Math.max(0, tooltipY),
+          transform: 'translateX(-50%)',
+          background: '#111827',
+          color: '#fff',
+          borderRadius: 6,
+          padding: '3px 8px',
+          fontSize: 11,
+          fontWeight: 500,
+          whiteSpace: 'nowrap',
+          pointerEvents: 'none',
+          zIndex: 10,
+        }}>
+          {MONTHS_SHORT[hoveredIdx]}: {data[hoveredIdx]} шт.
+        </div>
+      )}
+      <svg width="100%" height={H + 14} style={{ overflow: 'visible', display: 'block' }}>
+        {data.map((v, i) => {
+          const bh     = Math.max(3, (v / max) * H)
+          const x      = i * (bw + gap)
+          const isHov  = hoveredIdx === i
+          const isLast = i === data.length - 1
+          return (
+            <g key={i}
+              onMouseEnter={() => setHoveredIdx(i)}
+              onMouseLeave={() => setHoveredIdx(null)}
+              style={{ cursor: 'pointer' }}>
+              {/* transparent hit area */}
+              <rect x={x} y={0} width={bw} height={H} fill="transparent" />
+              <rect x={x} y={H - bh} width={bw} height={bh} rx={2}
+                fill={isHov ? '#374151' : isLast ? '#111827' : '#E5E7EB'} />
+              {(i === 0 || i === 5 || i === 11) && (
+                <text x={x + bw / 2} y={H + 12} textAnchor="middle" fontSize={9} fill="#9CA3AF">
+                  {MONTHS_SHORT[i]}
+                </text>
+              )}
+            </g>
+          )
+        })}
+      </svg>
     </div>
   )
 }
 
-// ─── Mini Bar Chart ───────────────────────────────────────────────────────────
+// ─── NeedDrawer ───────────────────────────────────────────────────────────────
 
-function MiniBarChart({ data }: { data: number[] }) {
-  const max = Math.max(...data, 1)
-  const W = 300; const H = 72; const gap = 3
-  const bw = (W - gap * (data.length - 1)) / data.length
-  return (
-    <svg width={W} height={H + 14} style={{ overflow: 'visible' }}>
-      {data.map((v, i) => {
-        const bh = Math.max(3, (v / max) * H)
-        const x  = i * (bw + gap)
-        return (
-          <g key={i}>
-            <rect x={x} y={H - bh} width={bw} height={bh} rx={2}
-              fill={i === data.length - 1 ? '#111827' : '#E5E7EB'} />
-            {(i === 0 || i === 5 || i === 11) && (
-              <text x={x + bw / 2} y={H + 12} textAnchor="middle" fontSize={9} fill="#9CA3AF">
-                {MONTHS_SHORT[i]}
-              </text>
-            )}
-          </g>
-        )
-      })}
-    </svg>
-  )
-}
-
-// ─── Product Drawer ───────────────────────────────────────────────────────────
-
-function NeedDrawer({ item, periodDays, onClose, onAddToCart }: {
-  item: NeedItem; periodDays: number
-  onClose: () => void; onAddToCart: (item: NeedItem, qty: number) => void
+function NeedDrawer({ item, periodDays, selectedPharmacyId, onClose, onAddToCart }: {
+  item: NeedItem
+  periodDays: number
+  selectedPharmacyId: string | null
+  onClose: () => void
+  onAddToCart: (item: NeedItem, qty: number) => void
 }) {
-  const cfg       = STATUS_CFG[item.status]
-  const recQty    = calcRecommendedQty(item, periodDays)
+  const cfg        = STATUS_CFG[item.status]
+  const recQty     = calcRecommendedQty(item, periodDays)
   const [qty, setQty] = useState(recQty > 0 ? recQty : 1)
+
   const bestOffer = useMemo(() => getBestOffer(item.id), [item.id])
+  const pharmacies = useMemo(() => {
+    const all = getItemPharmacies(item)
+    return selectedPharmacyId
+      ? all.filter(ph => ph.id === selectedPharmacyId)
+      : all
+  }, [item, selectedPharmacyId])
 
   useEffect(() => {
     const q = calcRecommendedQty(item, periodDays)
@@ -194,9 +309,11 @@ function NeedDrawer({ item, periodDays, onClose, onAddToCart }: {
   const excessQty = Math.max(0, item.stock - item.optimalStock)
 
   return (
-    <div className="flex h-full w-[380px] shrink-0 flex-col overflow-hidden border-l border-gray-200 bg-white">
+    <div className="flex h-full shrink-0 flex-col overflow-hidden border-l border-gray-200 bg-white"
+      style={{ width: DRAWER_W, minWidth: DRAWER_W }}>
+
       {/* Header */}
-      <div className="shrink-0 border-b border-gray-200 px-5 py-4">
+      <div className="shrink-0 border-b border-gray-200 p-4">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="text-sm font-semibold leading-snug text-gray-900">{item.name}</p>
@@ -212,63 +329,37 @@ function NeedDrawer({ item, periodDays, onClose, onAddToCart }: {
             {cfg.label}
           </span>
           {item.status === 'oos' && oosDays > 0 && (
-            <span className="text-xs text-red-500">{oosDays} {oosDays < 5 ? 'дня' : 'дней'} без товара</span>
+            <span className="text-xs text-red-500">Закончился {oosDays} {oosDays === 1 ? 'день' : oosDays < 5 ? 'дня' : 'дней'} назад</span>
           )}
           {item.status === 'critical' && (
-            <span className="text-xs text-amber-600">Осталось {Math.round(item.daysOfCover)} дн.</span>
+            <span className="text-xs text-amber-600">Хватит на {Math.round(item.daysOfCover)} дн.</span>
           )}
         </div>
       </div>
 
+      {/* Scrollable body */}
       <div className="flex-1 overflow-y-auto">
-        {/* Action card */}
-        {recQty > 0 && (
-          <div className="m-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Рекомендуем заказать</p>
-            <div className="mb-3 flex items-center gap-2">
-              <button onClick={() => setQty(q => Math.max(1, q - 1))}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors text-sm font-bold">−</button>
-              <input type="number" min={1} value={qty}
-                onChange={e => setQty(Math.max(1, Number(e.target.value)))}
-                className="h-8 w-16 rounded-lg border border-gray-200 bg-white text-center text-sm font-semibold tabular-nums outline-none focus:border-gray-900" />
-              <button onClick={() => setQty(q => q + 1)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors text-sm font-bold">+</button>
-              <span className="ml-auto text-sm font-bold text-gray-900">{formatCurrency(orderCost)}</span>
-            </div>
-            {bestOffer && (
-              <p className="mb-3 text-xs text-gray-500">
-                Лучшая цена: <span className="font-medium text-gray-700">{bestOffer.distributor.name}</span>
-                {' · '}{formatCurrency(bestOffer.priceWithVat)}/шт.
-              </p>
-            )}
-            <button onClick={() => onAddToCart(item, qty)}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-black">
-              <CartPlusIcon className="h-4 w-4" />
-              Добавить в заказ
-            </button>
-          </div>
-        )}
 
         {/* Metrics grid */}
-        <div className="mx-4 grid grid-cols-3 gap-2">
+        <div className="mx-4 mt-6 grid grid-cols-3 gap-2">
           {[
-            { label: 'Остаток',      value: item.stock === 0 ? 'Нет' : `${item.stock} шт.`, color: item.stock === 0 ? '#EF4444' : undefined },
+            { label: 'Остаток',      value: item.stock === 0 ? 'Нет' : `${item.stock} шт.`,           color: item.stock === 0 ? '#EF4444' : undefined },
             { label: 'Продажи/день', value: `${item.avgDailySales.toFixed(1)} шт.` },
-            { label: 'Покрытие',     value: item.daysOfCover === 0 ? 'OOS' : `${Math.round(item.daysOfCover)} дн.`, color: item.daysOfCover === 0 ? '#EF4444' : undefined },
+            { label: 'Хватит на',   value: item.daysOfCover === 0 ? '0 дней' : `${Math.round(item.daysOfCover)} дн.`, color: item.daysOfCover === 0 ? '#EF4444' : undefined },
             { label: 'Цена продажи', value: formatCurrency(item.salePrice) },
             { label: 'Закупочная',   value: formatCurrency(item.costPrice) },
             { label: 'Продажи/мес.', value: `${item.sales30d} шт.` },
           ].map(({ label, value, color }) => (
-            <div key={label} className="rounded-lg border border-gray-100 bg-gray-50 p-2.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">{label}</p>
-              <p className="mt-1.5 text-sm font-semibold text-gray-900" style={color ? { color } : undefined}>{value}</p>
+            <div key={label} className="rounded-lg border border-gray-100 bg-gray-50 p-2">
+              <p className="text-xs font-normal text-gray-400">{label}</p>
+              <p className="mt-2 text-sm font-semibold text-gray-900" style={color ? { color } : undefined}>{value}</p>
             </div>
           ))}
         </div>
 
         {/* OOS losses */}
         {item.status === 'oos' && item.lostRevenuePerDay > 0 && (
-          <div className="mx-4 mt-3 rounded-xl border border-red-200 bg-red-50 p-4">
+          <div className="mx-4 mt-6 rounded-xl border border-red-200 bg-red-50 p-4">
             <div className="mb-2 flex items-center gap-2">
               <TrendingDown className="h-3.5 w-3.5 text-red-500" />
               <p className="text-xs font-semibold uppercase tracking-wide text-red-500">Финансовые потери</p>
@@ -290,7 +381,7 @@ function NeedDrawer({ item, periodDays, onClose, onAddToCart }: {
 
         {/* Overstock frozen */}
         {(item.status === 'overstock' || item.status === 'dead') && item.frozenAmount > 0 && (
-          <div className="mx-4 mt-3 rounded-xl border border-blue-200 bg-blue-50 p-4">
+          <div className="mx-4 mt-6 rounded-xl border border-blue-200 bg-blue-50 p-4">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-blue-500">Заморожено в запасах</p>
             <div className="space-y-1.5 text-sm">
               <div className="flex justify-between">
@@ -315,31 +406,87 @@ function NeedDrawer({ item, periodDays, onClose, onAddToCart }: {
         )}
 
         {/* Chart */}
-        <div className="mx-4 mt-4">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Продажи — последние 12 месяцев</p>
+        <div className="mx-4 mt-6">
+          <p className="mb-3 text-xs font-semibold text-gray-400">Продажи — последние 12 месяцев</p>
           <MiniBarChart data={item.monthlySales} />
         </div>
 
-        {/* DOC bar */}
-        <div className="mx-4 mt-4 mb-4">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Уровень запасов</p>
-          <div className="relative h-2 overflow-hidden rounded-full bg-gray-100">
-            {item.daysOfCover > 0 && (
-              <div style={{
-                width: `${Math.min(100, (item.daysOfCover / 30) * 100)}%`, height: '100%', borderRadius: 9999,
-                background: item.daysOfCover < 3 ? '#EF4444' : item.daysOfCover < 7 ? '#F59E0B' : item.daysOfCover <= 30 ? '#10B981' : '#3B82F6',
-              }} />
-            )}
-          </div>
-          <div className="mt-1 flex justify-between text-[10px] text-gray-400">
-            <span>Пусто</span><span>Норма: 21 дн.</span><span>30+ дн.</span>
-          </div>
-          <p className="mt-1 text-xs text-gray-500">
-            {item.daysOfCover === 0 ? 'Товар отсутствует'
-              : item.daysOfCover > 30 ? `Переизбыток: ${Math.round(item.daysOfCover - 21)} дн. сверх нормы`
-              : `Скорость продаж: ${item.avgDailySales.toFixed(1)} шт./день`}
+        {/* Pharmacy analytics */}
+        <div className="mx-4 mt-6 mb-6">
+          <p className="mb-2 text-xs font-semibold text-gray-400">
+            Наличие по аптекам
           </p>
+          <div className="overflow-hidden rounded-xl border border-gray-200">
+            <table className="w-full" style={{ borderCollapse: 'collapse' }}>
+              <thead>
+                <tr className="border-b border-gray-200 bg-gray-50">
+                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-400">Аптека</th>
+                  <th className="px-3 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-gray-400">Остаток</th>
+                  <th className="px-3 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-gray-400">Прод/мес</th>
+                  <th className="px-3 py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-400">Статус</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pharmacies.map((ph, idx) => {
+                  const phCfg = STATUS_CFG[ph.status]
+                  return (
+                    <tr key={ph.id}
+                      className={cn('border-b border-gray-100 last:border-0', idx % 2 === 1 ? 'bg-gray-50/50' : 'bg-white')}>
+                      <td className="px-3 py-2.5">
+                        <p className="truncate text-xs font-medium text-gray-800" style={{ maxWidth: 130 }}>{ph.name}</p>
+                      </td>
+                      <td className="px-3 py-2.5 text-right tabular-nums">
+                        <span className={cn('text-xs font-semibold', ph.stock === 0 ? 'text-red-500' : 'text-gray-700')}>
+                          {ph.stock === 0 ? '—' : ph.stock}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2.5 text-right tabular-nums">
+                        <span className="text-xs text-gray-600">{ph.sales30d}</span>
+                      </td>
+                      <td className="px-3 py-2.5 text-center">
+                        <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap', phCfg.badgeCls)}>
+                          {phCfg.label}
+                        </span>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
+      </div>
+
+      {/* ── Sticky bottom: order block ────────────────────────────────────── */}
+      <div className="shrink-0 border-t border-gray-200 bg-white p-4">
+        {recQty > 0 ? (
+          <>
+            <div className="mb-2 flex items-center gap-2">
+              <button onClick={() => setQty(q => Math.max(1, q - 1))}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors text-sm font-bold">−</button>
+              <input type="number" min={1} value={qty}
+                onChange={e => setQty(Math.max(1, Number(e.target.value)))}
+                className="h-8 w-16 rounded-lg border border-gray-200 bg-white text-center text-sm font-semibold tabular-nums outline-none focus:border-gray-900" />
+              <button onClick={() => setQty(q => q + 1)}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors text-sm font-bold">+</button>
+              <span className="ml-auto text-[18px] font-bold text-gray-900">{formatCurrency(orderCost)}</span>
+            </div>
+            {bestOffer && (
+              <p className="mb-3 text-xs text-gray-500">
+                Лучшая цена:{' '}
+                <span className="font-medium text-gray-700">{bestOffer.distributor.name}</span>
+                {' · '}{formatCurrency(bestOffer.priceWithVat)}/шт.
+              </p>
+            )}
+            <button onClick={() => onAddToCart(item, qty)}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-black">
+              <Plus className="h-4 w-4" />
+              Добавить в корзину
+            </button>
+          </>
+        ) : (
+          <p className="py-1 text-center text-xs text-gray-400">Заказ не требуется</p>
+        )}
       </div>
     </div>
   )
@@ -350,14 +497,21 @@ function NeedDrawer({ item, periodDays, onClose, onAddToCart }: {
 export function NeedPage() {
   const { addItem } = usePurchaseCart()
 
-  // Filters / UI state
-  const [scenario,    setScenario]    = useState<ScenarioKey>('urgent')
-  const [period,      setPeriod]      = useState<PeriodKey>('week')
-  const [search,      setSearch]      = useState('')
-  const [groupFilter, setGroupFilter] = useState<string | null>(null)
-  const [groupOpen,   setGroupOpen]   = useState(false)
-  const [checkedIds,  setCheckedIds]  = useState<string[]>([])
-  const [drawerItem,  setDrawerItem]  = useState<NeedItem | null>(null)
+  // Pharmacy single-select
+  const [selectedPharmacyId, setSelectedPharmacyId] = useState<string | null>(null)
+  const [pharmacyOpen, setPharmacyOpen]             = useState(false)
+
+  // Other filters
+  const [scenario] = useState<ScenarioKey>('all')
+  const [period,       setPeriod]      = useState<PeriodKey>('week')
+  const [search,       setSearch]      = useState('')
+  const [minSales,     setMinSales]    = useState('')
+  const [groupFilter,  setGroupFilter] = useState<string | null>(null)
+  const [groupOpen,    setGroupOpen]   = useState(false)
+  const [statusFilter, setStatusFilter] = useState<NeedStatus[]>([])
+  const [statusOpen,   setStatusOpen]  = useState(false)
+  const [checkedIds,   setCheckedIds]  = useState<string[]>([])
+  const [drawerItem,   setDrawerItem]  = useState<NeedItem | null>(null)
 
   // Table container width → rubber name column
   const tableContainerRef = useRef<HTMLDivElement>(null)
@@ -393,7 +547,7 @@ export function NeedPage() {
   // Column drag-and-drop reorder
   const [colOrder, setColOrder] = useState<ColKey[]>(DEFAULT_ORDER)
   const dragColRef = useRef<ColKey | null>(null)
-  const [overCol,  setOverCol]  = useState<ColKey | null>(null)
+  const [overCol, setOverCol]   = useState<ColKey | null>(null)
 
   function handleColDragStart(e: React.DragEvent, key: ColKey) {
     dragColRef.current = key
@@ -416,30 +570,52 @@ export function NeedPage() {
 
   // Derived
   const periodDays = PERIODS.find(p => p.key === period)!.days
-  const kpi = useMemo(() => calcKpi(mockNeedItems, periodDays), [periodDays])
 
-  const scenarioCounts = useMemo(() =>
-    Object.fromEntries(SCENARIOS.map(s => [s.key, s.filter(mockNeedItems).length])) as Record<ScenarioKey, number>,
-    [],
-  )
+  // Pharmacy-filtered base list — если выбрана аптека, данные пересчитываются под неё
+  const pharmacyFiltered = useMemo(() => {
+    if (!selectedPharmacyId) return mockNeedItems
+    return getPharmacyItems(selectedPharmacyId)
+  }, [selectedPharmacyId])
+
+  const kpi = useMemo(() => calcKpi(pharmacyFiltered, periodDays), [pharmacyFiltered, periodDays])
 
   const filtered = useMemo(() => {
-    let list = SCENARIOS.find(s => s.key === scenario)!.filter(mockNeedItems)
+    let list = SCENARIOS.find(s => s.key === scenario)!.filter(pharmacyFiltered)
     if (groupFilter) list = list.filter(i => i.group === groupFilter)
+    if (statusFilter.length > 0) list = list.filter(i => statusFilter.includes(i.status))
     if (search.trim()) {
       const q = search.toLowerCase()
       list = list.filter(i => i.name.toLowerCase().includes(q) || i.manufacturer.toLowerCase().includes(q))
     }
+    const minVal = parseFloat(minSales)
+    if (!isNaN(minVal) && minVal > 0) list = list.filter(i => i.avgDailySales >= minVal)
     return [...list].sort(defaultSort)
-  }, [scenario, groupFilter, search])
+  }, [scenario, pharmacyFiltered, groupFilter, search, minSales, statusFilter])
 
   const allChecked  = filtered.length > 0 && filtered.every(i => checkedIds.includes(i.id))
   const someChecked = !allChecked && filtered.some(i => checkedIds.includes(i.id))
 
   const reorderableW = colOrder.reduce((s, k) => s + colWidths[k], 0)
   const drawerOpen   = drawerItem !== null
-  const nameW  = Math.max(MIN_NAME, containerW - COL_CB - reorderableW - COL_ACTION - (drawerOpen ? 380 : 0))
-  const tableW = COL_CB + nameW + reorderableW + COL_ACTION
+  const nameW  = Math.max(MIN_NAME, containerW - COL_CB - COL_MFR - reorderableW - COL_ACTION - (drawerOpen ? DRAWER_W : 0))
+  const tableW = COL_CB + nameW + COL_MFR + reorderableW + COL_ACTION
+
+  // Pharmacy dropdown label
+  const pharmacyLabel = selectedPharmacyId
+    ? (PHARMACIES.find(ph => ph.id === selectedPharmacyId)?.name ?? 'Аптека')
+    : `Все аптеки (${PHARMACIES.length})`
+
+  // KPI card filter click
+  function handleKpiClick(statuses: NeedStatus[]) {
+    const isActive = statuses.length === statusFilter.length &&
+      statuses.every(s => statusFilter.includes(s))
+    setStatusFilter(isActive ? [] : statuses)
+  }
+
+  function isKpiActive(statuses: NeedStatus[]) {
+    return statuses.length === statusFilter.length &&
+      statuses.every(s => statusFilter.includes(s))
+  }
 
   // Handlers
   const handleSelectAll = useCallback(() => {
@@ -477,7 +653,7 @@ export function NeedPage() {
   }
 
   function renderTh(key: ColKey) {
-    const isDragOver = overCol === key && dragColRef.current !== key
+    const isDragOver  = overCol === key && dragColRef.current !== key
     const borderStyle: React.CSSProperties = isDragOver
       ? { borderLeft: '2px solid #3B82F6', borderRight: '1px solid #e5e7eb' }
       : { borderRight: '1px solid #e5e7eb' }
@@ -490,7 +666,11 @@ export function NeedPage() {
     }
     return (
       <th key={key} {...dragProps}
-        style={{ ...thBase, ...borderStyle, position: 'sticky', top: 0, cursor: 'grab', textAlign: key === 'stock' || key === 'sales' || key === 'need' ? 'right' : 'left' }}>
+        style={{
+          ...thBase, ...borderStyle,
+          cursor: 'grab',
+          textAlign: key === 'stock' || key === 'sales' || key === 'need' ? 'right' : 'left',
+        }}>
         <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500" style={{ paddingRight: 8 }}>
           {COL_LABELS[key]}
         </span>
@@ -545,71 +725,83 @@ export function NeedPage() {
               : <span className="text-sm text-gray-300">—</span>}
           </td>
         )
-      case 'financial':
-        return (
-          <td key="financial" style={{ ...tdBase, textAlign: 'right' }}>
-            {item.status === 'oos' && (
-              <span className="text-xs font-semibold text-red-500 tabular-nums whitespace-nowrap">
-                −{formatCurrency(item.lostRevenuePerDay)}/д
-              </span>
-            )}
-            {(item.status === 'overstock' || item.status === 'dead') && item.frozenAmount > 0 && (
-              <span className="text-xs font-semibold text-blue-500 tabular-nums">
-                {formatCurrency(item.frozenAmount)}
-              </span>
-            )}
-            {(item.status === 'normal' || item.status === 'critical') && (
-              <span className="text-xs text-gray-300">—</span>
-            )}
-          </td>
-        )
       default: return null
     }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-white" onClick={() => setGroupOpen(false)}>
+    <div className="flex h-full flex-col overflow-hidden bg-white"
+      onClick={() => { setGroupOpen(false); setStatusOpen(false); setPharmacyOpen(false) }}>
 
-      {/* ── Top controls: Title + Search | Period + Group ─────────────────── */}
+      {/* ── Top controls ──────────────────────────────────────────────────── */}
       <div className="shrink-0 border-b border-gray-200 bg-white px-6 py-3">
-        <div className="flex items-center gap-4">
-          {/* Title */}
-          <h1 className="shrink-0 text-base font-semibold text-gray-900">Потребность</h1>
+        <div className="flex items-center gap-3">
+
+          {/* Pharmacy single-select */}
+          <div className="relative shrink-0" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setPharmacyOpen(v => !v)}
+              className={cn(
+                'flex h-9 w-[240px] items-center gap-2 rounded-lg border px-3 text-sm font-medium transition-colors',
+                selectedPharmacyId !== null
+                  ? 'border-gray-300 bg-gray-50 text-gray-900'
+                  : 'border-gray-200 text-gray-600 hover:border-gray-300',
+              )}>
+              <Building2 className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+              <span className="flex-1 truncate text-left">{pharmacyLabel}</span>
+              <ChevronDown className={cn('h-3.5 w-3.5 shrink-0 text-gray-400 transition-transform', pharmacyOpen && 'rotate-180')} />
+            </button>
+            {pharmacyOpen && (
+              <div className="absolute left-0 top-10 z-50 w-64 rounded-xl border border-gray-200 bg-white py-1 shadow-lg max-h-72 overflow-y-auto">
+                {/* All pharmacies option */}
+                <button onClick={() => { setSelectedPharmacyId(null); setPharmacyOpen(false) }}
+                  className={cn('flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50',
+                    selectedPharmacyId === null ? 'font-medium text-gray-900' : 'text-gray-500')}>
+                  <div className={cn('h-4 w-4 shrink-0 rounded-full border flex items-center justify-center',
+                    selectedPharmacyId === null ? 'border-gray-900' : 'border-gray-300')}>
+                    {selectedPharmacyId === null && <div className="h-2 w-2 rounded-full bg-gray-900" />}
+                  </div>
+                  Все аптеки
+                </button>
+                <div className="mx-3 my-1 h-px bg-gray-100" />
+                {PHARMACIES.map(ph => {
+                  const active = selectedPharmacyId === ph.id
+                  return (
+                    <button key={ph.id}
+                      onClick={() => { setSelectedPharmacyId(active ? null : ph.id); setPharmacyOpen(false) }}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50">
+                      <div className={cn('h-4 w-4 shrink-0 rounded-full border flex items-center justify-center',
+                        active ? 'border-gray-900' : 'border-gray-300')}>
+                        {active && <div className="h-2 w-2 rounded-full bg-gray-900" />}
+                      </div>
+                      <span className={cn('truncate', active ? 'font-medium text-gray-900' : 'text-gray-700')}>{ph.name}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
 
           {/* Search */}
-          <div className="relative h-9 w-56">
+          <div className="relative h-9 w-52">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input type="text" placeholder="Поиск по названию..." value={search}
               onChange={e => setSearch(e.target.value)}
               className="h-full w-full rounded-lg border border-gray-200 bg-white pl-9 pr-3 text-sm outline-none transition-colors focus:border-gray-400" />
           </div>
 
-          {/* Period tabs — right side */}
-          <div className="ml-auto flex items-center gap-1 rounded-lg bg-gray-100 p-1">
-            {PERIODS.map(p => (
-              <button key={p.key} onClick={() => setPeriod(p.key)}
-                className={cn(
-                  'rounded-md px-3 py-1.5 text-sm font-medium transition-all',
-                  period === p.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700',
-                )}>
-                {p.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Group filter */}
-          <div className="relative" onClick={e => e.stopPropagation()}>
+          {/* Group filter — ml-auto pushes rest to right */}
+          <div className="ml-auto relative shrink-0" onClick={e => e.stopPropagation()}>
             <button onClick={() => setGroupOpen(v => !v)}
               className={cn(
-                'flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm transition-colors',
+                'flex h-9 w-[180px] items-center gap-1.5 rounded-lg border px-3 text-sm transition-colors',
                 groupFilter ? 'border-gray-300 text-gray-700' : 'border-gray-200 text-gray-500 hover:border-gray-300',
               )}>
-              <span className="max-w-[130px] truncate">{groupFilter ?? 'Группа товаров'}</span>
+              <span className="flex-1 truncate text-left">{groupFilter ?? 'Группа товаров'}</span>
               <ChevronDown className={cn('h-3.5 w-3.5 shrink-0 transition-transform', groupOpen && 'rotate-180')} />
             </button>
             {groupOpen && (
-              <div className="absolute right-0 top-10 z-50 w-52 rounded-xl border border-gray-200 bg-white py-1 shadow-lg">
+              <div className="absolute right-0 top-10 z-50 w-52 rounded-xl border border-gray-200 bg-white py-1 shadow-lg max-h-64 overflow-y-auto">
                 <button onClick={() => { setGroupFilter(null); setGroupOpen(false) }}
                   className={cn('flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50', !groupFilter ? 'font-medium text-gray-900' : 'text-gray-500')}>
                   Все группы
@@ -625,102 +817,153 @@ export function NeedPage() {
             )}
           </div>
 
-          {groupFilter && (
-            <button onClick={() => setGroupFilter(null)}
-              className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600">
-              <X className="h-3 w-3" /> Сбросить
+          {/* Min sales filter */}
+          <div className="relative h-9 w-[180px] shrink-0">
+            <input
+              type="text"
+              inputMode="decimal"
+              placeholder="Продажа в день"
+              value={minSales}
+              onChange={e => {
+                const v = e.target.value
+                if (v === '' || /^\d*\.?\d*$/.test(v)) setMinSales(v)
+              }}
+              className="h-full w-full rounded-lg border border-gray-200 bg-white px-3 pr-7 text-sm outline-none transition-colors focus:border-gray-400 tabular-nums"
+            />
+            {minSales && (
+              <button onClick={() => setMinSales('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Status filter */}
+          <div className="relative shrink-0" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setStatusOpen(v => !v)}
+              className={cn(
+                'flex h-9 w-[180px] items-center gap-1.5 rounded-lg border px-3 text-sm transition-colors',
+                statusFilter.length > 0 ? 'border-gray-300 text-gray-700' : 'border-gray-200 text-gray-500 hover:border-gray-300',
+              )}>
+              <span className="flex-1 text-left">{statusFilter.length > 0 ? `Статус: ${statusFilter.length}` : 'Статус'}</span>
+              <ChevronDown className={cn('h-3.5 w-3.5 shrink-0 transition-transform', statusOpen && 'rotate-180')} />
             </button>
-          )}
+            {statusOpen && (
+              <div className="absolute right-0 top-10 z-50 w-48 rounded-xl border border-gray-200 bg-white py-1 shadow-lg">
+                {(Object.keys(STATUS_CFG) as NeedStatus[]).map(s => {
+                  const sCfg = STATUS_CFG[s]
+                  const active = statusFilter.includes(s)
+                  return (
+                    <button key={s}
+                      onClick={() => setStatusFilter(prev => active ? prev.filter(x => x !== s) : [...prev, s])}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50">
+                      <div className={cn('h-4 w-4 shrink-0 rounded flex items-center justify-center border',
+                        active ? 'bg-gray-900 border-gray-900' : 'border-gray-300')}>
+                        {active && <Check className="h-3 w-3 text-white" />}
+                      </div>
+                      <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold', sCfg.badgeCls)}>
+                        {sCfg.label}
+                      </span>
+                    </button>
+                  )
+                })}
+                {statusFilter.length > 0 && (
+                  <div className="border-t border-gray-100 mt-1 pt-1">
+                    <button onClick={() => setStatusFilter([])}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50">
+                      <X className="h-3 w-3" /> Сбросить
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Period tabs */}
+          <div className="flex shrink-0 items-center gap-1 rounded-lg bg-gray-100 p-1">
+            {PERIODS.map(p => (
+              <button key={p.key} onClick={() => setPeriod(p.key)}
+                className={cn(
+                  'rounded-md px-3 py-1.5 text-sm font-medium transition-all',
+                  period === p.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700',
+                )}>
+                {p.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
-
-      {/* ── Alert strip ─────────────────────────────────────────────────── */}
-      {kpi.oos.length > 0 && (
-        <div className="shrink-0 flex items-center gap-3 border-b border-red-200 bg-red-50 px-6 py-2.5">
-          <AlertTriangle className="h-4 w-4 shrink-0 text-red-500" />
-          <p className="text-sm text-red-700">
-            <span className="font-semibold">{kpi.oos.length} {kpi.oos.length === 1 ? 'товар' : 'товара'} OOS</span>
-            {' — '}ежедневные потери{' '}
-            <span className="font-semibold">{formatCurrency(kpi.lostPerDay)}</span>
-          </p>
-          <button onClick={() => setScenario('oos')}
-            className="ml-auto text-sm font-medium text-red-600 hover:underline">
-            Посмотреть →
-          </button>
-        </div>
-      )}
 
       {/* ── KPI Cards ───────────────────────────────────────────────────── */}
       <div className="shrink-0 border-b border-gray-200 px-6 py-4">
-        <div className="grid grid-cols-6 gap-3">
-          <button onClick={() => setScenario('oos')}
-            className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-white p-4 text-left transition-all hover:border-gray-300 hover:shadow-sm">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Out of Stock</p>
-            <p className={cn('text-2xl font-bold tabular-nums leading-none', kpi.oos.length > 0 ? 'text-red-500' : 'text-gray-900')}>
-              {kpi.oos.length} {kpi.oos.length === 1 ? 'товар' : 'товара'}
-            </p>
-            <p className="text-xs text-gray-500">{kpi.oos.length > 0 ? `Потери ${formatCurrency(kpi.lostPerDay)}/день` : 'Всё в наличии'}</p>
-          </button>
+        <div className="grid grid-cols-4 gap-3">
 
-          <button onClick={() => setScenario('urgent')}
-            className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-white p-4 text-left transition-all hover:border-gray-300 hover:shadow-sm">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Критично</p>
-            <p className={cn('text-2xl font-bold tabular-nums leading-none', kpi.critical.length > 0 ? 'text-amber-500' : 'text-gray-900')}>
-              {kpi.critical.length} {kpi.critical.length === 1 ? 'товар' : 'товара'}
-            </p>
-            <p className="text-xs text-gray-500">Остаток меньше 7 дней</p>
-          </button>
-
-          <button onClick={() => setScenario('overstock')}
-            className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-white p-4 text-left transition-all hover:border-gray-300 hover:shadow-sm">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Заморожено</p>
-            <p className="text-2xl font-bold tabular-nums leading-none text-blue-500">{formatCurrency(kpi.frozenTotal)}</p>
-            <p className="text-xs text-gray-500">{kpi.overstock.length} товара с избытком</p>
-          </button>
-
-          <div className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-white p-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Потери за месяц</p>
-            <p className={cn('text-2xl font-bold tabular-nums leading-none', kpi.lostPerDay > 0 ? 'text-red-500' : 'text-gray-900')}>
-              {formatCurrency(kpi.lostPerDay * 30)}
-            </p>
-            <p className="text-xs text-gray-500">При текущих OOS позициях</p>
+          {/* 1. Нет в наличии */}
+          <div onClick={() => handleKpiClick(['oos'])}
+            className={cn('flex flex-col rounded-xl border bg-white p-4 cursor-pointer transition-all',
+              isKpiActive(['oos']) ? 'border-gray-900 ring-1 ring-gray-900' : 'border-gray-200 hover:border-gray-300')}>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Нет в наличии</p>
+              <InfoTooltip text="Товары с нулевым остатком. Продажи невозможны — каждый день без товара приносит прямые потери выручки." />
+            </div>
+            <div className="mt-auto flex items-end justify-between gap-1 pt-3">
+              <p className={cn('text-2xl font-bold tabular-nums leading-none', kpi.oos.length > 0 ? 'text-red-500' : 'text-gray-900')}>
+                {kpi.oos.length} {kpi.oos.length === 1 ? 'товар' : 'товара'}
+              </p>
+              <p className="text-xs text-gray-500 text-right leading-tight">
+                {kpi.oos.length > 0 ? `Потери ${formatCurrency(kpi.lostPerDay)}/день` : 'Всё в наличии'}
+              </p>
+            </div>
           </div>
 
-          <button onClick={() => setScenario('urgent')}
-            className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-white p-4 text-left transition-all hover:border-gray-300 hover:shadow-sm">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Нужно заказать</p>
-            <p className="text-2xl font-bold tabular-nums leading-none text-gray-900">{formatCurrency(kpi.orderTotal)}</p>
-            <p className="text-xs text-gray-500">{kpi.orderCount} позиций · {PERIODS.find(p => p.key === period)!.label.toLowerCase()}</p>
-          </button>
-
-          <div className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-white p-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Среднее покрытие</p>
-            <p className={cn('text-2xl font-bold tabular-nums leading-none', kpi.avgDOC < 14 ? 'text-amber-500' : 'text-gray-900')}>
-              {Math.round(kpi.avgDOC)} дней
-            </p>
-            <p className="text-xs text-gray-500">Норма: 21–30 дней</p>
+          {/* 2. Критично */}
+          <div onClick={() => handleKpiClick(['critical'])}
+            className={cn('flex flex-col rounded-xl border bg-white p-4 cursor-pointer transition-all',
+              isKpiActive(['critical']) ? 'border-gray-900 ring-1 ring-gray-900' : 'border-gray-200 hover:border-gray-300')}>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Критично</p>
+              <InfoTooltip text="Товары с остатком менее 7 дней. Срочно требуют дозаказа, иначе перейдут в статус «Нет в наличии»." />
+            </div>
+            <div className="mt-auto flex items-end justify-between gap-1 pt-3">
+              <p className={cn('text-2xl font-bold tabular-nums leading-none', kpi.critical.length > 0 ? 'text-amber-500' : 'text-gray-900')}>
+                {kpi.critical.length} {kpi.critical.length === 1 ? 'товар' : 'товара'}
+              </p>
+              <p className="text-xs text-gray-500 text-right leading-tight">Хватит&nbsp;&lt;&nbsp;7 дней</p>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* ── Scenario tabs ────────────────────────────────────────────────── */}
-      <div className="shrink-0 border-b border-gray-200 bg-white px-6 py-2">
-        <div className="flex items-center gap-1 rounded-lg bg-gray-100 p-1 w-fit">
-          {SCENARIOS.map(s => (
-            <button key={s.key} onClick={() => setScenario(s.key)}
-              className={cn(
-                'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all',
-                scenario === s.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700',
-              )}>
-              {s.label}
-              <span className={cn(
-                'rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums',
-                scenario === s.key ? 'bg-gray-100 text-gray-600' : 'bg-white/60 text-gray-400',
-              )}>
-                {scenarioCounts[s.key]}
-              </span>
-            </button>
-          ))}
+          {/* 3. Срочный заказ */}
+          <div onClick={() => handleKpiClick(['oos', 'critical'])}
+            className={cn('flex flex-col rounded-xl border bg-white p-4 cursor-pointer transition-all',
+              isKpiActive(['oos', 'critical']) ? 'border-gray-900 ring-1 ring-gray-900' : 'border-gray-200 hover:border-gray-300')}>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Срочный заказ</p>
+              <InfoTooltip text="Минимальная сумма заказа для восстановления отсутствующих и критичных позиций на выбранный период." />
+            </div>
+            <div className="mt-auto flex items-end justify-between gap-1 pt-3">
+              <p className={cn('text-2xl font-bold tabular-nums leading-none', kpi.urgentTotal > 0 ? 'text-red-500' : 'text-gray-900')}>
+                {formatCurrency(kpi.urgentTotal)}
+              </p>
+              <p className="text-xs text-gray-500 text-right leading-tight">
+                {kpi.urgentCount} поз. · срочные позиции
+              </p>
+            </div>
+          </div>
+
+          {/* 4. Заморожено */}
+          <div onClick={() => handleKpiClick(['overstock', 'dead'])}
+            className={cn('flex flex-col rounded-xl border bg-white p-4 cursor-pointer transition-all',
+              isKpiActive(['overstock', 'dead']) ? 'border-gray-900 ring-1 ring-gray-900' : 'border-gray-200 hover:border-gray-300')}>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Заморожено</p>
+              <InfoTooltip text="Капитал, замороженный в товарах с избыточным запасом. Деньги, которые можно высвободить, сократив закупки." />
+            </div>
+            <div className="mt-auto flex items-end justify-between gap-1 pt-3">
+              <p className="text-2xl font-bold tabular-nums leading-none text-blue-500">{formatCurrency(kpi.frozenTotal)}</p>
+              <p className="text-xs text-gray-500 text-right leading-tight">{kpi.overstock.length} товаров с избытком</p>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -734,6 +977,7 @@ export function NeedPage() {
               <colgroup>
                 <col style={{ width: COL_CB }} />
                 <col style={{ width: nameW }} />
+                <col style={{ width: COL_MFR }} />
                 {colOrder.map(k => <col key={k} style={{ width: colWidths[k] }} />)}
                 <col style={{ width: COL_ACTION }} />
               </colgroup>
@@ -748,13 +992,17 @@ export function NeedPage() {
                         className="h-4 w-4 cursor-pointer rounded border-gray-300 accent-gray-900" />
                     </div>
                   </th>
-                  {/* Name — fixed, not reorderable */}
+                  {/* Name */}
                   <th style={{ ...thBase, textAlign: 'left', borderRight: '1px solid #e5e7eb' }}>
                     <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Название</span>
                   </th>
-                  {/* Reorderable columns */}
+                  {/* Manufacturer */}
+                  <th style={{ ...thBase, textAlign: 'left', borderRight: '1px solid #e5e7eb' }}>
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Производитель</span>
+                  </th>
+                  {/* Reorderable */}
                   {colOrder.map(k => renderTh(k))}
-                  {/* CTA header */}
+                  {/* Action header */}
                   <th style={{ ...thBase, position: 'sticky', right: 0, zIndex: 4, padding: 0, borderLeft: '1px solid #e5e7eb' }} />
                 </tr>
               </thead>
@@ -798,7 +1046,15 @@ export function NeedPage() {
                           <p className={cn('truncate text-sm font-medium', item.status === 'dead' ? 'text-gray-400' : 'text-gray-900')}>
                             {item.name}
                           </p>
-                          <p className="mt-0.5 truncate text-xs text-gray-400">{item.manufacturer} · {item.group}</p>
+                          <p className="mt-0.5 truncate text-xs text-gray-400">{item.group}</p>
+                        </div>
+                      </td>
+
+                      {/* Manufacturer + Country */}
+                      <td style={{ padding: '0 12px', overflow: 'hidden', borderRight: '1px solid #f3f4f6' }}>
+                        <div style={{ height: 56, display: 'flex', flexDirection: 'column', justifyContent: 'center', overflow: 'hidden' }}>
+                          <p className="truncate text-sm text-gray-700">{item.manufacturer}</p>
+                          <p className="mt-0.5 truncate text-xs text-gray-400">{item.country}</p>
                         </div>
                       </td>
 
@@ -813,16 +1069,17 @@ export function NeedPage() {
                       }}
                         className="transition-colors group-hover:bg-gray-50"
                         onClick={e => e.stopPropagation()}>
-                        {recQty > 0 ? (
-                          <button
-                            onClick={() => handleAddToCart(item, recQty)}
-                            title={`Добавить ${recQty} шт. в заказ`}
-                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-400 transition-all hover:border-gray-900 hover:text-gray-900">
-                            <CartPlusIcon className="h-4 w-4" />
-                          </button>
-                        ) : (
-                          <div className="h-8 w-8" />
-                        )}
+                        <button
+                          onClick={() => setDrawerItem(isOpen ? null : item)}
+                          title="Подробнее"
+                          className={cn(
+                            'flex h-8 w-8 items-center justify-center rounded-lg border transition-all',
+                            isOpen
+                              ? 'border-gray-900 bg-gray-900 text-white'
+                              : 'border-gray-200 text-gray-400 hover:border-gray-900 hover:text-gray-900',
+                          )}>
+                          <Eye className="h-4 w-4" />
+                        </button>
                       </td>
                     </tr>
                   )
@@ -832,7 +1089,7 @@ export function NeedPage() {
           </div>
 
           {/* Bulk action bar */}
-          {checkedIds.length >= 2 && (
+          {checkedIds.length >= 1 && (
             <div className="shrink-0 flex items-center justify-between border-t border-gray-200 bg-white px-6 py-3">
               <span className="text-sm text-gray-600">
                 Выбрано: <span className="font-semibold text-gray-900">{checkedIds.length}</span>
@@ -857,6 +1114,7 @@ export function NeedPage() {
           <NeedDrawer
             item={drawerItem}
             periodDays={periodDays}
+            selectedPharmacyId={selectedPharmacyId}
             onClose={() => setDrawerItem(null)}
             onAddToCart={handleAddToCart}
           />
