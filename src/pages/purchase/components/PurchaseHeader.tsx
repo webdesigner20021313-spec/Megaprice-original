@@ -13,6 +13,7 @@ showFavorites: boolean
 
 const tabs: { key: PurchaseTab; label: string }[] = [
   { key: 'manual',      label: 'Вручную'  },
+  { key: 'post',        label: 'Post'     },
   { key: 'excel',       label: 'Excel'    },
   { key: 'wholesalers', label: 'Оптовики' },
 ]

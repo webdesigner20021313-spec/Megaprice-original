@@ -73,7 +73,7 @@ export function SupplierTable({ offers, avgPrice, quantities, onQuantityChange, 
   function startResize(e: React.MouseEvent, key: keyof Col2Widths) {
     e.preventDefault(); e.stopPropagation()
     const startX = e.clientX, startW = cols[key]
-    function onMove(ev: MouseEvent) { setCols(prev => ({ ...prev, [key]: Math.max(48, startW + ev.clientX - startX) })) }
+    function onMove(ev: MouseEvent) { setCols(prev => ({ ...prev, [key]: Math.max(80, startW + ev.clientX - startX) })) }
     function onUp() {
       document.removeEventListener('mousemove', onMove)
       document.removeEventListener('mouseup', onUp)
@@ -154,11 +154,10 @@ export function SupplierTable({ offers, avgPrice, quantities, onQuantityChange, 
 
   return (
     <div style={{ height: '100%', overflowX: 'auto', overflowY: 'auto' }}>
-      <table style={{ tableLayout: 'fixed', width: '100%', minWidth: tableWidth, borderCollapse: 'collapse' }}>
+      <table style={{ tableLayout: 'fixed', width: tableWidth, borderCollapse: 'collapse' }}>
         <colgroup>
           <col style={{ width: cols.num }} />
           {visibleOrder.map((k) => <col key={k} style={{ width: cols[k] }} />)}
-          <col /> {/* spacer — поглощает лишнее пространство */}
           {col.quantity && <col style={{ width: cols.quantity }} />}
         </colgroup>
         <thead>
@@ -168,9 +167,6 @@ export function SupplierTable({ offers, avgPrice, quantities, onQuantityChange, 
             </th>
 
             {visibleOrder.map((k) => renderTh(k))}
-
-            {/* spacer th */}
-            <th style={{ ...thBase }} />
 
             {col.quantity && (
               <th style={{

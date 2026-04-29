@@ -57,16 +57,16 @@ export function MedicineTable({
         <col style={{ width: COL_FAV }} />
       </colgroup>
       <thead>
-        <tr style={{ height: 48 }}>
+        <tr>
           <th
             style={{
-              position: 'sticky', top: 0, left: 0, zIndex: 4,
-              width: COL_CB, background: '#F9FAFB',
+              position: 'sticky', top: 0, left: 0, zIndex: 4, height: 48,
+              width: COL_CB, background: '#F9FAFB', padding: 0,
               borderBottom: '1px solid #e5e7eb',
               boxShadow: '1px 0 0 #e5e7eb',
             }}
           >
-            <div style={{ height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <input
                 ref={cbRef}
                 type="checkbox"
@@ -78,8 +78,8 @@ export function MedicineTable({
           </th>
           <th
             style={{
-              position: 'sticky', top: 0, zIndex: 2, background: '#F9FAFB',
-              padding: '8px 12px', textAlign: 'left',
+              position: 'sticky', top: 0, zIndex: 2, height: 48, background: '#F9FAFB',
+              padding: '0 12px', textAlign: 'left',
               borderBottom: '1px solid #e5e7eb', borderRight: '1px solid #e5e7eb',
               overflow: 'hidden',
             }}
@@ -91,8 +91,8 @@ export function MedicineTable({
           </th>
           <th
             style={{
-              position: 'sticky', top: 0, zIndex: 2, background: '#F9FAFB',
-              padding: '8px 12px', textAlign: 'left',
+              position: 'sticky', top: 0, zIndex: 2, height: 48, background: '#F9FAFB',
+              padding: '0 12px', textAlign: 'left',
               borderBottom: '1px solid #e5e7eb', borderRight: '1px solid #e5e7eb',
               overflow: 'hidden',
             }}
@@ -104,8 +104,8 @@ export function MedicineTable({
           </th>
           <th
             style={{
-              position: 'sticky', top: 0, right: 0, zIndex: 4,
-              width: COL_FAV, background: '#F9FAFB',
+              position: 'sticky', top: 0, right: 0, zIndex: 4, height: 48,
+              width: COL_FAV, background: '#F9FAFB', padding: 0,
               borderBottom: '1px solid #e5e7eb',
               boxShadow: '-1px 0 0 #e5e7eb',
             }}

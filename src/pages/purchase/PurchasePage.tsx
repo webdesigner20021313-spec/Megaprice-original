@@ -9,7 +9,7 @@ import { mockSupplierOffers, mockMedicines } from '@/mocks/purchase.mocks'
 import { usePurchaseCart } from './hooks/usePurchaseCart'
 import type { Medicine, SupplierOffer, Distributor } from './types/purchase.types'
 
-export type PurchaseTab = 'manual' | 'excel' | 'wholesalers'
+export type PurchaseTab = 'manual' | 'post' | 'excel' | 'wholesalers'
 
 export function PurchasePage() {
   const [activeTab, setActiveTab] = useState<PurchaseTab>('manual')

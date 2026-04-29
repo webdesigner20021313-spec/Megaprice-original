@@ -69,7 +69,7 @@ export function SupplierRow({ offer, index, avgPrice, quantity, onQuantityChange
     switch (key) {
       case 'distributor':
         return (
-          <td key="distributor" style={{ ...tdBase, borderRight: '1px solid #f3f4f6' }}>
+          <td key="distributor" style={tdBase}>
             <div style={cellDiv()}>
               <p className="truncate text-sm font-medium text-gray-900">{offer.distributor.name}</p>
               <p className="truncate text-xs text-gray-500">{offer.distributor.city}</p>
@@ -145,9 +145,6 @@ export function SupplierRow({ offer, index, avgPrice, quantity, onQuantityChange
       </td>
 
       {colOrder.map((key) => renderCell(key))}
-
-      {/* spacer */}
-      <td style={{ borderBottom: '1px solid #f3f4f6' }} />
 
       {/* Количество — sticky right */}
       {col.quantity && (

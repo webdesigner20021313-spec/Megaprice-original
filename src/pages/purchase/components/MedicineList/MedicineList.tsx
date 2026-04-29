@@ -3,6 +3,7 @@ import { Zap } from 'lucide-react'
 import { MedicineFilters } from './MedicineFilters'
 import { MedicineTable } from './MedicineTable'
 import { ExcelUploadView } from './ExcelUploadView'
+import { PostMedicineList } from '../Post/PostMedicineList'
 import { mockMedicines, mockPosItems } from '@/mocks/purchase.mocks'
 import { useFavorites } from '@/pages/purchase/hooks/useFavorites'
 import { usePurchaseCart } from '@/pages/purchase/hooks/usePurchaseCart'
@@ -82,6 +83,17 @@ export function MedicineList({
     () => Array.from(new Set(mockMedicines.map((m) => m.manufacturer))).sort(),
     []
   )
+
+  // Post tab
+  if (activeTab === 'post') {
+    return (
+      <PostMedicineList
+        selectedMedicine={selectedMedicine}
+        onSelect={(med) => med && onSelect(med)}
+        showFavorites={showFavorites}
+      />
+    )
+  }
 
   // Excel tab
   if (activeTab === 'excel') {
