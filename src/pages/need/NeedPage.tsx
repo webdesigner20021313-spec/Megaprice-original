@@ -359,45 +359,9 @@ export function NeedPage() {
   const [checkedIds,  setCheckedIds]  = useState<string[]>([])
   const [drawerItem,  setDrawerItem]  = useState<NeedItem | null>(null)
 
-<<<<<<< HEAD
-  // ── Настройки панели управления ──
-  const [period, setPeriod] = useState(30)
-
-  // ── Фильтры оптовиков (подняты в NeedPage → рендерятся в шапке) ──
-  const [distributorFilter, setDistributorFilter] = useState<string[]>([])
-  const [cityFilter,        setCityFilter]        = useState<string[]>([])
-  const [bonusFilter,       setBonusFilter]       = useState<BonusType[]>([])
-  //const [visibleColumns, setVisibleColumns]       = useState<Record<ColumnKey, boolean>>({
-    //expiry: true, payment: true, price: true, bonus: true, quantity: true,
-  //})
-
-  // ── Dropdown open states ──
-  const [openDist,  setOpenDist]  = useState(false)
-  const [openCity,  setOpenCity]  = useState(false)
-  const [openBonus, setOpenBonus] = useState(false)
-
-  const distRef  = useClickOutside(() => setOpenDist(false))
-  const cityRef  = useClickOutside(() => setOpenCity(false))
-  const bonusRef = useClickOutside(() => setOpenBonus(false))
-
-  // ── Размеры панелей ──
-  const [leftW,        setLeftW]        = useState(480)
-  const [vertSplitPct, setVertSplitPct] = useState(55)
-
-  // ── Состояния ──
-  const [isLoading, setIsLoading] = useState(false)
-
-  const containerRef      = useRef<HTMLDivElement>(null)
-  const rightContainerRef = useRef<HTMLDivElement>(null)
-
-  const selectedMedicine = mockMedicines.find((m) => m.id === selectedMedicineId) ?? null
-
-  // Skeleton на смену лекарства
-=======
   // Table container width → rubber name column
   const tableContainerRef = useRef<HTMLDivElement>(null)
   const [containerW, setContainerW] = useState(900)
->>>>>>> 106c702 (v1.0.5 — Потребность редизайн + вкладка Пост в Магазине)
   useEffect(() => {
     if (!tableContainerRef.current) return
     const ro = new ResizeObserver(e => setContainerW(e[0].contentRect.width))
