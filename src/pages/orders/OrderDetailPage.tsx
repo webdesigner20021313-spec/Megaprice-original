@@ -294,15 +294,11 @@ export function OrderDetailPage() {
   const { id }    = useParams<{ id: string }>()
   const navigate  = useNavigate()
 
-  const order = mockOrders.find(o => o.id === id)
-  if (!order) return <NotFound />
   const [localStatus, setLocalStatus] = useState<OrderStatus | null>(null)
-  const groupSendStatus: Record<string, 'sent' | 'pending'> = {}
 
-  order.groups.forEach(group => {
-  groupSendStatus[group.distributorId] = 'pending'
-  })
-  
+  const order = mockOrders.find(o => o.id === id)
+
+  if (!order) return <NotFound />
 
   const effectiveStatus: OrderStatus = localStatus ?? order.status
 
