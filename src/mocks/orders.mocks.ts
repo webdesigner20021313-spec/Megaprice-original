@@ -1,7 +1,170 @@
 import type { Order } from '@/pages/orders/types'
 
 export const mockOrders: Order[] = [
-  // ── Отправлены (8) ────────────────────────────────────────────────────────
+
+  // ── Новые (не отправлены) ─────────────────────────────────────────────────
+
+  {
+    id: 'ord-015',
+    number: 'ЗАК-11042',
+    pharmacyName: 'Аптека «Олмос»',
+    pharmacyAddress: 'ул. Амира Темура, 47',
+    pharmacyCity: 'Ташкент',
+    status: 'new',
+    createdAt: '2026-04-30T08:10:00',
+    totalQty: 34,
+    totalSum: 1_098_000,
+    groups: [
+      {
+        distributorId: 'ds1',
+        distributorName: 'Farmservis',
+        distributorCity: 'Ташкент',
+        contactType: 'telegram',
+        contact: '@farmservis_bot',
+        sendStatus: 'pending',
+        subtotal: 1_098_000,
+        items: [
+          { id: 'n1', medicineName: 'Аспирин 500мг №20',      manufacturer: 'Bayer',  country: 'Германия', quantity: 20, priceWithVat: 25_000 },
+          { id: 'n2', medicineName: 'Амоксициллин 500мг №16', manufacturer: 'Sandoz', country: 'Словения', quantity: 14, priceWithVat: 38_000 },
+        ],
+      },
+    ],
+  },
+
+  {
+    id: 'ord-016',
+    number: 'ЗАК-11043',
+    pharmacyName: 'Аптека «Shifо»',
+    pharmacyAddress: 'пр. Регистан, 12',
+    pharmacyCity: 'Самарканд',
+    status: 'new',
+    createdAt: '2026-04-30T09:45:00',
+    totalQty: 55,
+    totalSum: 2_165_000,
+    groups: [
+      {
+        distributorId: 'ds2',
+        distributorName: 'Tajmed',
+        distributorCity: 'Ташкент',
+        contactType: 'telegram',
+        contact: '@tajmed_zakaz',
+        sendStatus: 'pending',
+        subtotal: 1_350_000,
+        items: [
+          { id: 'n3', medicineName: 'Омепразол 20мг №28',  manufacturer: 'AstraZeneca', country: 'Швеция',  quantity: 10, priceWithVat: 45_000 },
+          { id: 'n4', medicineName: 'Метформин 850мг №60', manufacturer: 'Teva',        country: 'Израиль', quantity: 20, priceWithVat: 32_000 },
+        ],
+      },
+      {
+        distributorId: 'ds5',
+        distributorName: 'Dori-Darmon',
+        distributorCity: 'Самарканд',
+        contactType: 'email',
+        contact: 'order@doridarmon.uz',
+        sendStatus: 'pending',
+        subtotal: 815_000,
+        items: [
+          { id: 'n5', medicineName: 'Цетиризин 10мг №10',  manufacturer: 'Pfizer',  country: 'США',      quantity: 15, priceWithVat: 22_000 },
+          { id: 'n6', medicineName: 'Лоратадин 10мг №10',  manufacturer: 'Actavis', country: 'Исландия', quantity: 10, priceWithVat: 28_000 },
+        ],
+      },
+    ],
+  },
+
+  // ── Частично отправлены ───────────────────────────────────────────────────
+
+  {
+    id: 'ord-017',
+    number: 'ЗАК-10981',
+    pharmacyName: 'Аптека «Hayot»',
+    pharmacyAddress: 'ул. Навои, 5',
+    pharmacyCity: 'Ташкент',
+    status: 'partial',
+    createdAt: '2026-04-29T11:20:00',
+    totalQty: 62,
+    totalSum: 2_437_000,
+    groups: [
+      {
+        distributorId: 'ds1',
+        distributorName: 'Farmservis',
+        distributorCity: 'Ташкент',
+        contactType: 'telegram',
+        contact: '@farmservis_bot',
+        sendStatus: 'sent',
+        subtotal: 1_575_000,
+        items: [
+          { id: 'p1', medicineName: 'Эналаприл 10мг №20',    manufacturer: 'Hexal',  country: 'Германия', quantity: 25, priceWithVat: 35_000 },
+          { id: 'p2', medicineName: 'Аспирин 500мг №20',      manufacturer: 'Bayer',  country: 'Германия', quantity: 18, priceWithVat: 25_000 },
+        ],
+      },
+      {
+        distributorId: 'ds3',
+        distributorName: 'Alfa Pharma',
+        distributorCity: 'Самарканд',
+        contactType: 'email',
+        contact: 'info@alfapharma.uz',
+        sendStatus: 'pending',
+        subtotal: 862_000,
+        items: [
+          { id: 'p3', medicineName: 'Нимесулид 100мг №20', manufacturer: 'Ranbaxy', country: 'Индия',   quantity: 12, priceWithVat: 42_000 },
+          { id: 'p4', medicineName: 'Ибупрофен 400мг №20', manufacturer: 'Richter', country: 'Венгрия', quantity: 7,  priceWithVat: 18_750 },
+        ],
+      },
+    ],
+  },
+
+  {
+    id: 'ord-018',
+    number: 'ЗАК-10952',
+    pharmacyName: 'Аптека «Baraka»',
+    pharmacyAddress: 'ул. Мустакиллик, 88',
+    pharmacyCity: 'Фергана',
+    status: 'partial',
+    createdAt: '2026-04-28T14:05:00',
+    totalQty: 80,
+    totalSum: 3_280_000,
+    groups: [
+      {
+        distributorId: 'ds2',
+        distributorName: 'Tajmed',
+        distributorCity: 'Ташкент',
+        contactType: 'telegram',
+        contact: '@tajmed_zakaz',
+        sendStatus: 'sent',
+        subtotal: 1_600_000,
+        items: [
+          { id: 'q1', medicineName: 'Метформин 850мг №60', manufacturer: 'Teva',    country: 'Израиль', quantity: 50, priceWithVat: 32_000 },
+        ],
+      },
+      {
+        distributorId: 'ds4',
+        distributorName: 'Ташфарм',
+        distributorCity: 'Бухара',
+        contactType: 'telegram',
+        contact: '@tashfarm_orders',
+        sendStatus: 'sent',
+        subtotal: 875_000,
+        items: [
+          { id: 'q2', medicineName: 'Аспирин 500мг №20', manufacturer: 'Bayer', country: 'Германия', quantity: 35, priceWithVat: 25_000 },
+        ],
+      },
+      {
+        distributorId: 'ds5',
+        distributorName: 'Dori-Darmon',
+        distributorCity: 'Самарканд',
+        contactType: 'email',
+        contact: 'order@doridarmon.uz',
+        sendStatus: 'pending',
+        subtotal: 805_000,
+        items: [
+          { id: 'q3', medicineName: 'Омепразол 20мг №28',  manufacturer: 'AstraZeneca', country: 'Швеция',   quantity: 10, priceWithVat: 45_000 },
+          { id: 'q4', medicineName: 'Лоратадин 10мг №10',  manufacturer: 'Actavis',     country: 'Исландия', quantity: 5,  priceWithVat: 28_000 },
+        ],
+      },
+    ],
+  },
+
+  // ── Отправлены ────────────────────────────────────────────────────────────
 
   {
     id: 'ord-001',
@@ -15,8 +178,12 @@ export const mockOrders: Order[] = [
     totalSum: 1_195_000,
     groups: [
       {
-        distributorName: 'ООО «Farmservis»',
+        distributorId: 'ds1',
+        distributorName: 'Farmservis',
         distributorCity: 'Ташкент',
+        contactType: 'telegram',
+        contact: '@farmservis_bot',
+        sendStatus: 'sent',
         subtotal: 820_000,
         items: [
           { id: 'i1', medicineName: 'Аспирин 500мг №20',      manufacturer: 'Bayer',  country: 'Германия', quantity: 10, priceWithVat: 25_000 },
@@ -24,8 +191,12 @@ export const mockOrders: Order[] = [
         ],
       },
       {
-        distributorName: 'ООО «Tajmed»',
+        distributorId: 'ds2',
+        distributorName: 'Tajmed',
         distributorCity: 'Ташкент',
+        contactType: 'telegram',
+        contact: '@tajmed_zakaz',
+        sendStatus: 'sent',
         subtotal: 375_000,
         items: [
           { id: 'i3', medicineName: 'Ибупрофен 400мг №20', manufacturer: 'Richter', country: 'Венгрия', quantity: 20, priceWithVat: 18_750 },
@@ -46,8 +217,12 @@ export const mockOrders: Order[] = [
     totalSum: 884_000,
     groups: [
       {
-        distributorName: 'ООО «Tajmed»',
+        distributorId: 'ds2',
+        distributorName: 'Tajmed',
         distributorCity: 'Ташкент',
+        contactType: 'telegram',
+        contact: '@tajmed_zakaz',
+        sendStatus: 'sent',
         subtotal: 884_000,
         items: [
           { id: 'i4', medicineName: 'Омепразол 20мг №28',  manufacturer: 'AstraZeneca', country: 'Швеция',   quantity: 8,  priceWithVat: 45_000 },
@@ -70,8 +245,12 @@ export const mockOrders: Order[] = [
     totalSum: 472_000,
     groups: [
       {
-        distributorName: 'ООО «Dori-Darmon»',
+        distributorId: 'ds5',
+        distributorName: 'Dori-Darmon',
         distributorCity: 'Самарканд',
+        contactType: 'email',
+        contact: 'order@doridarmon.uz',
+        sendStatus: 'sent',
         subtotal: 472_000,
         items: [
           { id: 'i7', medicineName: 'Нимесулид 100мг №20', manufacturer: 'Ranbaxy', country: 'Индия', quantity: 6,  priceWithVat: 42_000 },
@@ -93,8 +272,12 @@ export const mockOrders: Order[] = [
     totalSum: 1_405_000,
     groups: [
       {
-        distributorName: 'ООО «Farmservis»',
+        distributorId: 'ds1',
+        distributorName: 'Farmservis',
         distributorCity: 'Ташкент',
+        contactType: 'telegram',
+        contact: '@farmservis_bot',
+        sendStatus: 'sent',
         subtotal: 1_405_000,
         items: [
           { id: 'i9',  medicineName: 'Эналаприл 10мг №20',    manufacturer: 'Hexal',  country: 'Германия', quantity: 15, priceWithVat: 35_000 },
@@ -117,8 +300,12 @@ export const mockOrders: Order[] = [
     totalSum: 818_500,
     groups: [
       {
-        distributorName: 'ООО «Tajmed»',
+        distributorId: 'ds2',
+        distributorName: 'Tajmed',
         distributorCity: 'Ташкент',
+        contactType: 'telegram',
+        contact: '@tajmed_zakaz',
+        sendStatus: 'sent',
         subtotal: 818_500,
         items: [
           { id: 'i12', medicineName: 'Ибупрофен 400мг №20', manufacturer: 'Richter', country: 'Венгрия', quantity: 30, priceWithVat: 18_750 },
@@ -140,8 +327,12 @@ export const mockOrders: Order[] = [
     totalSum: 1_367_000,
     groups: [
       {
-        distributorName: 'ООО «Farmservis»',
+        distributorId: 'ds1',
+        distributorName: 'Farmservis',
         distributorCity: 'Ташкент',
+        contactType: 'telegram',
+        contact: '@farmservis_bot',
+        sendStatus: 'sent',
         subtotal: 855_000,
         items: [
           { id: 'i14', medicineName: 'Омепразол 20мг №28',  manufacturer: 'AstraZeneca', country: 'Швеция', quantity: 5,  priceWithVat: 45_000 },
@@ -149,8 +340,12 @@ export const mockOrders: Order[] = [
         ],
       },
       {
-        distributorName: 'ООО «Dori-Darmon»',
+        distributorId: 'ds5',
+        distributorName: 'Dori-Darmon',
         distributorCity: 'Самарканд',
+        contactType: 'email',
+        contact: 'order@doridarmon.uz',
+        sendStatus: 'sent',
         subtotal: 512_000,
         items: [
           { id: 'i16', medicineName: 'Цетиризин 10мг №10', manufacturer: 'Pfizer',  country: 'США',      quantity: 8,  priceWithVat: 22_000 },
@@ -172,8 +367,12 @@ export const mockOrders: Order[] = [
     totalSum: 1_950_000,
     groups: [
       {
-        distributorName: 'ООО «Ташфарм»',
+        distributorId: 'ds4',
+        distributorName: 'Ташфарм',
         distributorCity: 'Бухара',
+        contactType: 'telegram',
+        contact: '@tashfarm_orders',
+        sendStatus: 'sent',
         subtotal: 1_950_000,
         items: [
           { id: 'i18', medicineName: 'Аспирин 500мг №20',  manufacturer: 'Bayer', country: 'Германия', quantity: 50, priceWithVat: 25_000 },
@@ -195,8 +394,12 @@ export const mockOrders: Order[] = [
     totalSum: 950_000,
     groups: [
       {
-        distributorName: 'ООО «Dori-Darmon»',
+        distributorId: 'ds5',
+        distributorName: 'Dori-Darmon',
         distributorCity: 'Самарканд',
+        contactType: 'email',
+        contact: 'order@doridarmon.uz',
+        sendStatus: 'sent',
         subtotal: 950_000,
         items: [
           { id: 'i20', medicineName: 'Амоксициллин 500мг №16', manufacturer: 'Sandoz', country: 'Словения', quantity: 25, priceWithVat: 38_000 },
@@ -205,7 +408,7 @@ export const mockOrders: Order[] = [
     ],
   },
 
-  // ── Завершены (6) ─────────────────────────────────────────────────────────
+  // ── Завершены ─────────────────────────────────────────────────────────────
 
   {
     id: 'ord-009',
@@ -219,8 +422,12 @@ export const mockOrders: Order[] = [
     totalSum: 1_710_000,
     groups: [
       {
-        distributorName: 'ООО «Tajmed»',
+        distributorId: 'ds2',
+        distributorName: 'Tajmed',
         distributorCity: 'Ташкент',
+        contactType: 'telegram',
+        contact: '@tajmed_zakaz',
+        sendStatus: 'sent',
         subtotal: 1_710_000,
         items: [
           { id: 'i21', medicineName: 'Метформин 850мг №60', manufacturer: 'Teva',    country: 'Израиль', quantity: 30, priceWithVat: 32_000 },
@@ -242,8 +449,12 @@ export const mockOrders: Order[] = [
     totalSum: 1_263_000,
     groups: [
       {
-        distributorName: 'ООО «Farmservis»',
+        distributorId: 'ds1',
+        distributorName: 'Farmservis',
         distributorCity: 'Ташкент',
+        contactType: 'telegram',
+        contact: '@farmservis_bot',
+        sendStatus: 'sent',
         subtotal: 1_263_000,
         items: [
           { id: 'i23', medicineName: 'Нимесулид 100мг №20', manufacturer: 'Ranbaxy',     country: 'Индия',    quantity: 10, priceWithVat: 42_000 },
@@ -266,16 +477,24 @@ export const mockOrders: Order[] = [
     totalSum: 4_400_000,
     groups: [
       {
-        distributorName: 'ООО «Ташфарм»',
+        distributorId: 'ds4',
+        distributorName: 'Ташфарм',
         distributorCity: 'Бухара',
+        contactType: 'telegram',
+        contact: '@tashfarm_orders',
+        sendStatus: 'sent',
         subtotal: 2_500_000,
         items: [
           { id: 'i26', medicineName: 'Аспирин 500мг №20', manufacturer: 'Bayer', country: 'Германия', quantity: 100, priceWithVat: 25_000 },
         ],
       },
       {
-        distributorName: 'ООО «Farmservis»',
+        distributorId: 'ds1',
+        distributorName: 'Farmservis',
         distributorCity: 'Ташкент',
+        contactType: 'telegram',
+        contact: '@farmservis_bot',
+        sendStatus: 'sent',
         subtotal: 1_900_000,
         items: [
           { id: 'i27', medicineName: 'Амоксициллин 500мг №16', manufacturer: 'Sandoz', country: 'Словения', quantity: 50, priceWithVat: 38_000 },
@@ -296,8 +515,12 @@ export const mockOrders: Order[] = [
     totalSum: 2_060_000,
     groups: [
       {
-        distributorName: 'ООО «Farmservis»',
+        distributorId: 'ds1',
+        distributorName: 'Farmservis',
         distributorCity: 'Ташкент',
+        contactType: 'telegram',
+        contact: '@farmservis_bot',
+        sendStatus: 'sent',
         subtotal: 2_060_000,
         items: [
           { id: 'i28', medicineName: 'Эналаприл 10мг №20', manufacturer: 'Hexal',  country: 'Германия', quantity: 40, priceWithVat: 35_000 },
@@ -319,8 +542,12 @@ export const mockOrders: Order[] = [
     totalSum: 1_257_000,
     groups: [
       {
-        distributorName: 'ООО «Dori-Darmon»',
+        distributorId: 'ds5',
+        distributorName: 'Dori-Darmon',
         distributorCity: 'Самарканд',
+        contactType: 'email',
+        contact: 'order@doridarmon.uz',
+        sendStatus: 'sent',
         subtotal: 1_257_000,
         items: [
           { id: 'i30', medicineName: 'Метформин 850мг №60', manufacturer: 'Teva',    country: 'Израиль', quantity: 20, priceWithVat: 32_000 },
@@ -343,12 +570,45 @@ export const mockOrders: Order[] = [
     totalSum: 550_000,
     groups: [
       {
-        distributorName: 'ООО «Tajmed»',
+        distributorId: 'ds2',
+        distributorName: 'Tajmed',
         distributorCity: 'Ташкент',
+        contactType: 'telegram',
+        contact: '@tajmed_zakaz',
+        sendStatus: 'sent',
         subtotal: 550_000,
         items: [
           { id: 'i33', medicineName: 'Омепразол 20мг №28',  manufacturer: 'AstraZeneca', country: 'Швеция',   quantity: 6,  priceWithVat: 45_000 },
           { id: 'i34', medicineName: 'Лоратадин 10мг №10',  manufacturer: 'Actavis',     country: 'Исландия', quantity: 10, priceWithVat: 28_000 },
+        ],
+      },
+    ],
+  },
+
+  // ── Отменён ───────────────────────────────────────────────────────────────
+
+  {
+    id: 'ord-019',
+    number: 'ЗАК-10730',
+    pharmacyName: 'Аптека «Shifо»',
+    pharmacyAddress: 'пр. Регистан, 12',
+    pharmacyCity: 'Самарканд',
+    status: 'cancelled',
+    createdAt: '2026-04-27T10:30:00',
+    totalQty: 20,
+    totalSum: 760_000,
+    groups: [
+      {
+        distributorId: 'ds3',
+        distributorName: 'Alfa Pharma',
+        distributorCity: 'Самарканд',
+        contactType: 'email',
+        contact: 'info@alfapharma.uz',
+        sendStatus: 'pending',
+        subtotal: 760_000,
+        items: [
+          { id: 'c1', medicineName: 'Нимесулид 100мг №20', manufacturer: 'Ranbaxy', country: 'Индия',   quantity: 10, priceWithVat: 42_000 },
+          { id: 'c2', medicineName: 'Ибупрофен 400мг №20', manufacturer: 'Richter', country: 'Венгрия', quantity: 10, priceWithVat: 18_750 },
         ],
       },
     ],

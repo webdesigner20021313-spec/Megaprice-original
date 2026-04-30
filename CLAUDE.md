@@ -172,4 +172,4 @@ npm run build  # Сборка
 ### v1.0.0 — 23.04.2026
 - Первый релиз: Layout (Header + Sidebar), модуль «Закупки», Корзина
 - Demo данные корзины (9 позиций от 3 оптовиков)
-- UI Kit: Button, Input, Badge, Toast, Card, Table, Modal, Select
+- UI Kit: Button, Input, Badge, Toast, Card, Table, Modal, Select 

@@ -1,4 +1,5 @@
-export type OrderStatus = 'sent' | 'completed'
+export type OrderStatus     = 'new' | 'partial' | 'sent' | 'completed' | 'cancelled'
+export type GroupSendStatus = 'pending' | 'sent'
 
 export interface OrderStatusConfig {
   label: string
@@ -7,8 +8,11 @@ export interface OrderStatusConfig {
 }
 
 export const ORDER_STATUS_CONFIG: Record<OrderStatus, OrderStatusConfig> = {
-  sent:      { label: 'Отправлен', bg: 'bg-[#DBEAFE]', text: 'text-[#1E40AF]' },
-  completed: { label: 'Завершён',  bg: 'bg-[#D1FAE5]', text: 'text-[#065F46]' },
+  new:       { label: 'Новый',              bg: 'bg-[#DBEAFE]', text: 'text-[#1E40AF]' },
+  partial:   { label: 'Частично отправлен', bg: 'bg-[#FEF3C7]', text: 'text-[#92400E]' },
+  sent:      { label: 'Отправлен',          bg: 'bg-[#EDE9FE]', text: 'text-[#5B21B6]' },
+  completed: { label: 'Завершён',           bg: 'bg-[#D1FAE5]', text: 'text-[#065F46]' },
+  cancelled: { label: 'Отменён',            bg: 'bg-[#FEE2E2]', text: 'text-[#991B1B]' },
 }
 
 export interface OrderItem {
@@ -22,8 +26,12 @@ export interface OrderItem {
 
 /** Позиции одного оптовика внутри заказа */
 export interface OrderDistributorGroup {
+  distributorId: string
   distributorName: string
   distributorCity: string
+  contactType: 'telegram' | 'email'
+  contact: string            // @handle или email
+  sendStatus: GroupSendStatus
   items: OrderItem[]
   subtotal: number
 }

@@ -1,13 +1,21 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import {
   Search, X, Package, Building2,
-  ChevronDown, Check, Zap, TrendingDown, Eye, Plus,
+  ChevronDown, Check, Zap, TrendingDown, Eye, Plus, Download, Star,
 } from 'lucide-react'
+import * as XLSX from 'xlsx'
 import { cn } from '@/lib/utils'
 import { formatCurrency } from '@/lib/format'
 import { mockNeedItems, type NeedItem, type NeedStatus } from '@/mocks/need.mocks'
 import { mockSupplierOffers } from '@/mocks/purchase.mocks'
+import type { SupplierOffer } from '@/pages/purchase/types/purchase.types'
 import { usePurchaseCart } from '@/pages/purchase/hooks/usePurchaseCart'
+
+// Precomputed offer count per medicine (статичный мап для быстрого доступа)
+const OFFER_COUNT: Record<string, number> = {}
+mockSupplierOffers.forEach(o => {
+  OFFER_COUNT[o.medicineId] = (OFFER_COUNT[o.medicineId] ?? 0) + 1
+})
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -198,6 +206,12 @@ function getBestOffer(medicineId: string) {
     .sort((a, b) => a.priceWithVat - b.priceWithVat)[0] ?? null
 }
 
+function getAllOffers(medicineId: string): SupplierOffer[] {
+  return mockSupplierOffers
+    .filter(o => o.medicineId === medicineId)
+    .sort((a, b) => a.priceWithVat - b.priceWithVat)
+}
+
 // ─── DocBar ───────────────────────────────────────────────────────────────────
 
 function DocBar({ days }: { days: number }) {
@@ -275,20 +289,147 @@ function MiniBarChart({ data }: { data: number[] }) {
   )
 }
 
+// ─── OffersModal ─────────────────────────────────────────────────────────────
+
+function OffersModal({ item, currentOfferId, onSelectOffer, onClose }: {
+  item: NeedItem
+  currentOfferId: string | null
+  onSelectOffer: (offer: SupplierOffer) => void
+  onClose: () => void
+}) {
+  const offers    = getAllOffers(item.id)
+  const bestPrice = offers[0]?.priceWithVat ?? 0
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onClick={onClose}>
+      <div className="flex w-[760px] flex-col overflow-hidden rounded-xl bg-white shadow-2xl"
+        style={{ maxHeight: '80vh' }}
+        onClick={e => e.stopPropagation()}>
+
+        {/* Header */}
+        <div className="shrink-0 border-b border-gray-200 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900">{item.name}</p>
+              <p className="mt-0.5 text-xs text-gray-400">{item.manufacturer} · {item.country} · {item.group}</p>
+            </div>
+            <button onClick={onClose}
+              className="shrink-0 rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 transition-colors">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="flex-1 overflow-y-auto">
+          {offers.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <Package className="mb-3 h-8 w-8 text-gray-300" />
+              <p className="text-sm text-gray-400">Нет предложений от поставщиков на этот товар</p>
+            </div>
+          ) : (
+            <table className="w-full" style={{ borderCollapse: 'collapse' }}>
+              <thead>
+                <tr className="border-b border-gray-200 bg-gray-50" style={{ position: 'sticky', top: 0, zIndex: 1 }}>
+                  <th className="w-8 px-3 py-2.5" />
+                  {['Оптовик', 'Город', 'Цена с НДС', 'Дата прайса', 'Срок годности', 'Бонус'].map(h => (
+                    <th key={h} className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-400 whitespace-nowrap">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {offers.map(offer => {
+                  const isBest    = offer.priceWithVat === bestPrice
+                  const isSelected = (currentOfferId ?? offers[0]?.id) === offer.id
+                  return (
+                    <tr key={offer.id}
+                      onClick={() => { onSelectOffer(offer); onClose() }}
+                      className={cn(
+                        'cursor-pointer border-b border-gray-100 last:border-0 transition-colors hover:bg-gray-50',
+                        isBest && !isSelected ? 'bg-green-50' : 'bg-white',
+                      )}>
+                      {/* Radio */}
+                      <td className="px-3 py-3">
+                        <div className={cn('h-4 w-4 rounded-full border-2 flex items-center justify-center',
+                          isSelected ? 'border-gray-900' : 'border-gray-300')}>
+                          {isSelected && <div className="h-2 w-2 rounded-full bg-gray-900" />}
+                        </div>
+                      </td>
+                      {/* Оптовик */}
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-semibold text-gray-900">{offer.distributor.name}</span>
+                          {isBest && (
+                            <span className="inline-flex items-center gap-0.5 rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">
+                              <Star className="h-2.5 w-2.5" />
+                              Лучшая
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      {/* Город */}
+                      <td className="px-3 py-3">
+                        <span className="text-xs text-gray-600">{offer.distributor.city}</span>
+                      </td>
+                      {/* Цена */}
+                      <td className="px-3 py-3">
+                        <div className="flex flex-col">
+                          <span className={cn('text-xs font-bold tabular-nums', isBest ? 'text-green-700' : 'text-gray-900')}>
+                            {formatCurrency(offer.priceWithVat)}
+                          </span>
+                          {offer.originalPrice && (
+                            <span className="text-[10px] text-gray-400 tabular-nums line-through">
+                              {formatCurrency(offer.originalPrice)}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      {/* Дата прайса */}
+                      <td className="px-3 py-3">
+                        <span className="text-xs text-gray-500">{offer.distributor.lastPriceDate}</span>
+                      </td>
+                      {/* Срок годности */}
+                      <td className="px-3 py-3">
+                        <span className="text-xs text-gray-500">{offer.expiryDate}</span>
+                      </td>
+                      {/* Бонус */}
+                      <td className="px-3 py-3">
+                        {offer.bonus
+                          ? <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">{offer.bonus.label}</span>
+                          : <span className="text-xs text-gray-300">—</span>
+                        }
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── NeedDrawer ───────────────────────────────────────────────────────────────
 
-function NeedDrawer({ item, periodDays, selectedPharmacyId, onClose, onAddToCart }: {
+function NeedDrawer({ item, periodDays, selectedPharmacyId, activeOffer, onClose, onAddToCart, onShowOffers }: {
   item: NeedItem
   periodDays: number
   selectedPharmacyId: string | null
+  activeOffer: SupplierOffer | null
   onClose: () => void
   onAddToCart: (item: NeedItem, qty: number) => void
+  onShowOffers: (item: NeedItem) => void
 }) {
   const cfg        = STATUS_CFG[item.status]
   const recQty     = calcRecommendedQty(item, periodDays)
   const [qty, setQty] = useState(recQty > 0 ? recQty : 1)
 
-  const bestOffer = useMemo(() => getBestOffer(item.id), [item.id])
+  const bestOffer = activeOffer
   const pharmacies = useMemo(() => {
     const all = getItemPharmacies(item)
     return selectedPharmacyId
@@ -359,20 +500,20 @@ function NeedDrawer({ item, periodDays, selectedPharmacyId, onClose, onAddToCart
 
         {/* OOS losses */}
         {item.status === 'oos' && item.lostRevenuePerDay > 0 && (
-          <div className="mx-4 mt-6 rounded-xl border border-red-200 bg-red-50 p-4">
-            <div className="mb-2 flex items-center gap-2">
-              <TrendingDown className="h-3.5 w-3.5 text-red-500" />
-              <p className="text-xs font-semibold uppercase tracking-wide text-red-500">Финансовые потери</p>
+          <div className="mx-4 mt-4 rounded-xl bg-gray-900 p-4">
+            <div className="mb-6 flex items-center gap-1.5">
+              <TrendingDown className="h-3.5 w-3.5 text-red-400" />
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-white">Финансовые потери</span>
             </div>
-            <div className="space-y-1.5 text-sm">
-              <div className="flex justify-between">
-                <span className="text-red-700">В день</span>
-                <span className="font-semibold text-red-700 tabular-nums">{formatCurrency(item.lostRevenuePerDay)}</span>
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <p className="text-[11px] text-white">В день</p>
+                <p className="mt-0.5 text-[22px] font-bold leading-none tabular-nums text-red-400">{formatCurrency(item.lostRevenuePerDay)}</p>
               </div>
               {oosDays > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-red-700">За {oosDays} {oosDays < 5 ? 'дня' : 'дней'}</span>
-                  <span className="font-bold text-red-800 tabular-nums">{formatCurrency(totalLost)}</span>
+                <div className="text-right">
+                  <p className="text-[11px] text-white">Уже потеряно за {oosDays} {oosDays === 1 ? 'день' : oosDays < 5 ? 'дня' : 'дней'}</p>
+                  <p className="mt-0.5 text-[22px] font-bold leading-none tabular-nums text-red-400">{formatCurrency(totalLost)}</p>
                 </div>
               )}
             </div>
@@ -381,41 +522,38 @@ function NeedDrawer({ item, periodDays, selectedPharmacyId, onClose, onAddToCart
 
         {/* Overstock frozen */}
         {(item.status === 'overstock' || item.status === 'dead') && item.frozenAmount > 0 && (
-          <div className="mx-4 mt-6 rounded-xl border border-blue-200 bg-blue-50 p-4">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-blue-500">Заморожено в запасах</p>
-            <div className="space-y-1.5 text-sm">
-              <div className="flex justify-between">
-                <span className="text-blue-700">Текущий остаток</span>
-                <span className="font-semibold text-blue-700">{item.stock} шт.</span>
+          <div className="mx-4 mt-4 rounded-xl bg-gray-900 p-4">
+            <div className="mb-6 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <Zap className="h-3.5 w-3.5 text-blue-400" />
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-white">Замороженный капитал</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-blue-700">Оптимальный запас</span>
-                <span className="font-semibold text-blue-700">{item.optimalStock} шт.</span>
-              </div>
-              <div className="flex justify-between border-t border-blue-200 pt-1.5">
-                <span className="font-medium text-blue-800">Избыток ({excessQty} шт.)</span>
-                <span className="font-bold text-blue-800 tabular-nums">{formatCurrency(item.frozenAmount)}</span>
-              </div>
+              <span className="text-[12px] text-gray-300">в наличии {item.stock} шт. · избыток {excessQty} шт.</span>
             </div>
-            {item.avgDailySales > 0 && (
-              <p className="mt-2 text-xs text-blue-600">
-                Распродастся через ~{Math.round(item.stock / item.avgDailySales)} дней без дозаказа
-              </p>
-            )}
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <p className="text-[11px] text-white">В запасах</p>
+                <p className="mt-0.5 text-[22px] font-bold leading-none tabular-nums text-white">{formatCurrency(item.frozenAmount)}</p>
+              </div>
+              {item.avgDailySales > 0 && (
+                <div className="text-right">
+                  <p className="text-[11px] text-white">Распродастся за</p>
+                  <p className="mt-0.5 text-[22px] font-bold leading-none tabular-nums text-white">~{Math.round(item.stock / item.avgDailySales)} дн.</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
         {/* Chart */}
         <div className="mx-4 mt-6">
-          <p className="mb-3 text-xs font-semibold text-gray-400">Продажи — последние 12 месяцев</p>
+          <p className="mb-3 text-xs font-semibold text-gray-900">Продажи — последние 12 месяцев</p>
           <MiniBarChart data={item.monthlySales} />
         </div>
 
         {/* Pharmacy analytics */}
         <div className="mx-4 mt-6 mb-6">
-          <p className="mb-2 text-xs font-semibold text-gray-400">
-            Наличие по аптекам
-          </p>
+          <p className="mb-2 text-xs font-semibold text-gray-900">Наличие по аптекам</p>
           <div className="overflow-hidden rounded-xl border border-gray-200">
             <table className="w-full" style={{ borderCollapse: 'collapse' }}>
               <thead>
@@ -458,31 +596,56 @@ function NeedDrawer({ item, periodDays, selectedPharmacyId, onClose, onAddToCart
       </div>
 
       {/* ── Sticky bottom: order block ────────────────────────────────────── */}
-      <div className="shrink-0 border-t border-gray-200 bg-white p-4">
+      <div className="shrink-0 border-t border-gray-200 bg-white p-4" style={{ boxShadow: '0 -4px 12px rgba(0,0,0,0.06)' }}>
         {recQty > 0 ? (
           <>
-            <div className="mb-2 flex items-center gap-2">
-              <button onClick={() => setQty(q => Math.max(1, q - 1))}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors text-sm font-bold">−</button>
-              <input type="number" min={1} value={qty}
-                onChange={e => setQty(Math.max(1, Number(e.target.value)))}
-                className="h-8 w-16 rounded-lg border border-gray-200 bg-white text-center text-sm font-semibold tabular-nums outline-none focus:border-gray-900" />
-              <button onClick={() => setQty(q => q + 1)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors text-sm font-bold">+</button>
-              <span className="ml-auto text-[18px] font-bold text-gray-900">{formatCurrency(orderCost)}</span>
-            </div>
             {bestOffer && (
-              <p className="mb-3 text-xs text-gray-500">
-                Лучшая цена:{' '}
-                <span className="font-medium text-gray-700">{bestOffer.distributor.name}</span>
-                {' · '}{formatCurrency(bestOffer.priceWithVat)}/шт.
-              </p>
+              <div className="mb-2 flex items-center gap-2">
+                <button onClick={() => setQty(q => Math.max(1, q - 1))}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors text-sm font-bold">−</button>
+                <input type="number" min={1} value={qty}
+                  onChange={e => setQty(Math.max(1, Number(e.target.value)))}
+                  className="h-8 w-16 rounded-lg border border-gray-200 bg-white text-center text-sm font-semibold tabular-nums outline-none focus:border-gray-900" />
+                <button onClick={() => setQty(q => q + 1)}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors text-sm font-bold">+</button>
+                <span className="ml-auto text-[18px] font-bold text-gray-900">{formatCurrency(orderCost)}</span>
+              </div>
             )}
-            <button onClick={() => onAddToCart(item, qty)}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-black">
+            {bestOffer && (() => {
+              const cheapestPrice = getAllOffers(item.id)[0]?.priceWithVat ?? 0
+              const isActuallyBest = bestOffer.priceWithVat === cheapestPrice
+              return (
+                <button
+                  onClick={() => onShowOffers(item)}
+                  className="mb-3 flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-left text-xs text-gray-500 hover:bg-gray-50 transition-colors">
+                  <span className="shrink-0">{isActuallyBest ? 'Лучшая цена:' : 'Выбранный оптовик:'}</span>
+                  <span className="font-medium text-gray-700">{bestOffer.distributor.name}</span>
+                  <span className="text-gray-400">·</span>
+                  <span className="text-gray-500">{bestOffer.distributor.city}</span>
+                  <span className="text-gray-400">·</span>
+                  <span className="font-semibold text-gray-700 tabular-nums">{formatCurrency(bestOffer.priceWithVat)}/шт.</span>
+                  {OFFER_COUNT[item.id] > 1 && (
+                    <span className="ml-auto shrink-0 rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-500">
+                      +{OFFER_COUNT[item.id] - 1} ещё
+                    </span>
+                  )}
+                </button>
+              )
+            })()}
+            <button onClick={() => bestOffer && onAddToCart(item, qty)}
+              disabled={!bestOffer}
+              className={cn(
+                'flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-colors',
+                bestOffer
+                  ? 'bg-gray-900 text-white hover:bg-black'
+                  : 'cursor-not-allowed bg-gray-100 text-gray-400',
+              )}>
               <Plus className="h-4 w-4" />
               Добавить в корзину
             </button>
+            {!bestOffer && (
+              <p className="mt-2 text-center text-xs text-red-500">Нет предложений от поставщиков на этот товар</p>
+            )}
           </>
         ) : (
           <p className="py-1 text-center text-xs text-gray-400">Заказ не требуется</p>
@@ -510,8 +673,10 @@ export function NeedPage() {
   const [groupOpen,    setGroupOpen]   = useState(false)
   const [statusFilter, setStatusFilter] = useState<NeedStatus[]>([])
   const [statusOpen,   setStatusOpen]  = useState(false)
-  const [checkedIds,   setCheckedIds]  = useState<string[]>([])
-  const [drawerItem,   setDrawerItem]  = useState<NeedItem | null>(null)
+  const [checkedIds,      setCheckedIds]      = useState<string[]>([])
+  const [drawerItem,      setDrawerItem]      = useState<NeedItem | null>(null)
+  const [offersModalItem, setOffersModalItem] = useState<NeedItem | null>(null)
+  const [selectedOfferMap, setSelectedOfferMap] = useState<Record<string, SupplierOffer>>({})
 
   // Table container width → rubber name column
   const tableContainerRef = useRef<HTMLDivElement>(null)
@@ -629,13 +794,13 @@ export function NeedPage() {
   }
 
   const handleAddToCart = useCallback((item: NeedItem, qty: number) => {
-    const offer = getBestOffer(item.id)
+    const offer = selectedOfferMap[item.id] ?? getBestOffer(item.id)
     if (!offer) return
     addItem({
       offerId: offer.id, medicineId: item.id, quantity: qty, offer,
       medicine: { id: item.id, name: item.name, manufacturer: item.manufacturer, country: item.country, isFavorite: false, mnn: '', form: '', dosage: '', packageSize: '' } as any,
     })
-  }, [addItem])
+  }, [addItem, selectedOfferMap])
 
   function handleBulkAddToCart() {
     filtered.filter(i => checkedIds.includes(i.id)).forEach(item => {
@@ -643,6 +808,33 @@ export function NeedPage() {
       if (qty > 0) handleAddToCart(item, qty)
     })
     setCheckedIds([])
+  }
+
+  function handleExport() {
+    const rows = filtered.map(item => {
+      const bestOffer = getBestOffer(item.id)
+      return {
+        'Название':           item.name,
+        'Производитель':      item.manufacturer,
+        'Страна':             item.country,
+        'Группа':             item.group,
+        'Статус':             STATUS_CFG[item.status].label,
+        'Остаток (шт.)':      item.stock,
+        'Хватит на (дн.)':    Math.round(item.daysOfCover),
+        'Продажи/день':       item.avgDailySales,
+        'Нужно заказать':     calcRecommendedQty(item, periodDays),
+        'Лучшая цена (UZS)':  bestOffer?.priceWithVat ?? '',
+        'Оптовик':            bestOffer?.distributor.name ?? '',
+        'Город оптовика':     bestOffer?.distributor.city ?? '',
+      }
+    })
+    const ws = XLSX.utils.json_to_sheet(rows)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Потребность')
+    const pharmacyName = selectedPharmacyId
+      ? PHARMACIES.find(p => p.id === selectedPharmacyId)?.name ?? 'аптека'
+      : 'все аптеки'
+    XLSX.writeFile(wb, `Потребность — ${pharmacyName} — ${new Date().toLocaleDateString('ru')}.xlsx`)
   }
 
   // ── Render th (reorderable) ────────────────────────────────────────────────
@@ -891,6 +1083,14 @@ export function NeedPage() {
               </button>
             ))}
           </div>
+
+          {/* Export */}
+          <button onClick={handleExport}
+            className="flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-green-600 bg-green-600 px-3 text-sm font-medium text-white hover:bg-green-700 hover:border-green-700 transition-colors">
+            <Download className="h-3.5 w-3.5" />
+            Excel
+          </button>
+
         </div>
       </div>
 
@@ -972,6 +1172,7 @@ export function NeedPage() {
 
         {/* Table */}
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+
           <div ref={tableContainerRef} className="flex-1 overflow-x-auto overflow-y-auto">
             <table style={{ tableLayout: 'fixed', width: tableW, minWidth: tableW, borderCollapse: 'collapse' }}>
               <colgroup>
@@ -1115,11 +1316,23 @@ export function NeedPage() {
             item={drawerItem}
             periodDays={periodDays}
             selectedPharmacyId={selectedPharmacyId}
+            activeOffer={selectedOfferMap[drawerItem.id] ?? getBestOffer(drawerItem.id)}
             onClose={() => setDrawerItem(null)}
             onAddToCart={handleAddToCart}
+            onShowOffers={setOffersModalItem}
           />
         )}
       </div>
+
+      {/* Offers Modal */}
+      {offersModalItem && (
+        <OffersModal
+          item={offersModalItem}
+          currentOfferId={selectedOfferMap[offersModalItem.id]?.id ?? null}
+          onSelectOffer={offer => setSelectedOfferMap(prev => ({ ...prev, [offersModalItem.id]: offer }))}
+          onClose={() => setOffersModalItem(null)}
+        />
+      )}
     </div>
   )
 }
