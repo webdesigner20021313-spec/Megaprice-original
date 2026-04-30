@@ -300,6 +300,9 @@ export function OrderDetailPage() {
 
   if (!order) return <NotFound />
 
+  const groupSendStatus: Record<string, 'sent' | 'pending'> = {}
+  order.groups.forEach(g => { groupSendStatus[g.distributorId] = g.sendStatus })
+
   const effectiveStatus: OrderStatus = localStatus ?? order.status
 
   const totalItems  = order.groups.reduce((s, g) => s + g.items.length, 0)
@@ -326,20 +329,20 @@ export function OrderDetailPage() {
           </div>
 
           {/* Download buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <button
               onClick={() => printInvoice(order)}
               className="flex h-9 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
             >
               <FileText className="h-4 w-4" />
-              Инвойс
+              <span className="hidden sm:inline">Инвойс</span>
             </button>
             <button
               onClick={() => downloadFullExcel(order)}
               className="flex h-9 items-center gap-1.5 rounded-lg border border-green-600 bg-green-600 px-3 text-sm font-medium text-white hover:bg-green-700 hover:border-green-700 transition-colors"
             >
               <Download className="h-4 w-4" />
-              Excel
+              <span className="hidden sm:inline">Excel</span>
             </button>
           </div>
         </div>
@@ -385,7 +388,7 @@ export function OrderDetailPage() {
 
           {/* ── Позиции ── */}
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-            <div className="border-b border-gray-200 bg-gray-50 px-5 py-3.5">
+            <div className="border-b border-gray-200 bg-gray-50 px-5 py-3.5 shrink-0">
               <p className="text-sm font-semibold text-gray-900">
                 Препараты
                 <span className="ml-2 text-xs font-normal text-gray-500">
@@ -394,6 +397,7 @@ export function OrderDetailPage() {
               </p>
             </div>
 
+            <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/60">
@@ -453,6 +457,7 @@ export function OrderDetailPage() {
                 ))}
               </tbody>
             </table>
+            </div>
 
             <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50 px-5 py-3.5">
               <span className="text-sm text-gray-500">{order.totalQty} единиц</span>
