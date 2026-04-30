@@ -42,7 +42,7 @@ function downloadGroupExcel(group: OrderDistributorGroup, orderNumber: string) {
   XLSX.writeFile(wb, `${orderNumber}_${group.distributorName}.xlsx`)
 }
 
-function downloadFullExcel(order: ReturnType<typeof mockOrders[0]['groups'][0]> extends never ? never : typeof mockOrders[0]) {
+function downloadFullExcel(order: typeof mockOrders[0]) {
   const rows: Record<string, string | number>[] = []
 
   for (const group of order.groups) {
@@ -297,7 +297,11 @@ export function OrderDetailPage() {
   const order = mockOrders.find(o => o.id === id)
 
   const [localStatus, setLocalStatus] = useState<OrderStatus | null>(null)
+  const groupSendStatus: Record<string, 'sent' | 'pending'> = {}
 
+  order.groups.forEach(group => {
+  groupSendStatus[group.distributorId] = 'pending'
+  })
   if (!order) return <NotFound />
 
   const effectiveStatus: OrderStatus = localStatus ?? order.status
