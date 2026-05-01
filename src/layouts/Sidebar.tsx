@@ -3,9 +3,7 @@ import {
   Store,
   ClipboardList,
   ShoppingCart,
-  BarChart3,
   TrendingUp,
-  Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
