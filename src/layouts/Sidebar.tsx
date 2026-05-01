@@ -6,6 +6,7 @@ import {
   BarChart3,
   TrendingUp,
   Terminal,
+  Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -22,6 +23,7 @@ const navItems: NavItem[] = [
   { label: 'Корзинка',    path: '/cart',              icon: <ShoppingCart className="h-6 w-6" />, end: true  },
   { label: 'Заказы',      path: '/orders',            icon: <ClipboardList className="h-6 w-6" />, end: false },
   { label: 'Аналитика',   path: '/analytics/reports', icon: <BarChart3 className="h-6 w-6" />,    end: false },
+  { label: 'Пользователи', path: '/users',            icon: <Users className="h-6 w-6" />,        end: true  },
 ]
 
 export function Sidebar() {
