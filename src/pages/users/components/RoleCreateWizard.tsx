@@ -18,12 +18,13 @@ interface Props {
 
 type Step = 1 | 2 | 3
 
-// Init all features = true for a module
+// Init all permissions and features = true for a module
 function buildDefaultPermission(moduleId: ModuleId): ModulePermission {
   const config = MODULES_CONFIG.find((m) => m.id === moduleId)!
   return {
-    access:   true,
-    features: Object.fromEntries(config.features.map((f) => [f.id, true])),
+    access:      true,
+    permissions: Object.fromEntries(config.permissions.map((p) => [p.id, true])),
+    features:    Object.fromEntries(config.features.map((f) => [f.id, true])),
   }
 }
 
