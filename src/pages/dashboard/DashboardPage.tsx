@@ -50,14 +50,14 @@ function StatusBadge({ status }: { status: OrderStatus }) {
 
 // ─── DashboardPage ────────────────────────────────────────────────────────────
 
-const STATUS_ORDER: OrderStatus[] = ['sent', 'completed']
+const STATUS_ORDER: OrderStatus[] = ['new', 'completed', 'cancelled']
 
 export function DashboardPage() {
   const navigate = useNavigate()
 
   // ── Computed stats ──────────────────────────────────────────────────────────
   const totalOrders    = mockOrders.length
-  const sentCount      = mockOrders.filter(o => o.status === 'sent').length
+  const activeCount    = mockOrders.filter(o => o.status === 'new').length
   const completedCount = mockOrders.filter(o => o.status === 'completed').length
   const monthSum       = mockOrders.reduce((s, o) => s + o.totalSum, 0)
 
@@ -137,9 +137,9 @@ export function DashboardPage() {
             <KpiCard
               icon={<Clock className="h-5 w-5 text-[#1E40AF]" />}
               iconBg="bg-[#DBEAFE]"
-              label="Отправлено"
-              value={String(sentCount)}
-              sub="ожидают получения"
+              label="Активных"
+              value={String(activeCount)}
+              sub="заказов в работе"
             />
             <KpiCard
               icon={<TrendingUp className="h-5 w-5 text-[#065F46]" />}

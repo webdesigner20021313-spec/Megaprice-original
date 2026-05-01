@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Package, Download, Calendar } from 'lucide-react'
+import { Search, Package, Download, Calendar, AlertCircle, ChevronDown } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { cn } from '@/lib/utils'
 import { formatCurrency, formatDate } from '@/lib/format'
@@ -45,16 +45,16 @@ function EmptyState({ hasFilters }: { hasFilters: boolean }) {
 
 function exportToExcel(orders: typeof mockOrders) {
   const rows = orders.map((o, i) => ({
-    '№':          i + 1,
-    'Номер':      o.number,
-    'Аптека':     o.pharmacyName,
-    'Город':      o.pharmacyCity,
-    'Оптовики':   o.groups.map(g => g.distributorName).join(', '),
-    'Позиций':    o.groups.reduce((s, g) => s + g.items.length, 0),
-    'Кол-во':     o.totalQty,
-    'Сумма':      o.totalSum,
-    'Дата':       formatDate(o.createdAt),
-    'Статус':     ORDER_STATUS_CONFIG[o.status].label,
+    '№':        i + 1,
+    'Номер':    o.number,
+    'Аптека':   o.pharmacyName,
+    'Город':    o.pharmacyCity,
+    'Оптовики': o.groups.map(g => g.distributorName).join(', '),
+    'Позиций':  o.groups.reduce((s, g) => s + g.items.length, 0),
+    'Кол-во':   o.totalQty,
+    'Сумма':    o.totalSum,
+    'Дата':     formatDate(o.createdAt),
+    'Статус':   ORDER_STATUS_CONFIG[o.status].label,
   }))
   const ws = XLSX.utils.json_to_sheet(rows)
   const wb = XLSX.utils.book_new()
@@ -68,10 +68,11 @@ export function OrderHistoryPage() {
   const navigate = useNavigate()
   const [search,       setSearch]       = useState('')
   const [dateRange,    setDateRange]    = useState('')
-  const dateFrom = dateRange.split(' - ')[0]?.trim() ?? ''
-  const dateTo   = dateRange.split(' - ')[1]?.trim() ?? ''
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all')
   const [checked,      setChecked]      = useState<string[]>([])
+
+  const dateFrom = dateRange.split(' - ')[0]?.trim() ?? ''
+  const dateTo   = dateRange.split(' - ')[1]?.trim() ?? ''
 
   const filteredOrders = useMemo(() => {
     return mockOrders
@@ -109,7 +110,7 @@ export function OrderHistoryPage() {
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             {/* Поиск */}
-            <div className="relative w-56">
+            <div className="relative w-60">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
@@ -121,8 +122,7 @@ export function OrderHistoryPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-
+          <div className="flex items-center gap-2.5">
             {/* Дата-диапазон */}
             <div className="flex h-9 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3">
               <input
@@ -136,24 +136,25 @@ export function OrderHistoryPage() {
               <Calendar className="h-4 w-4 shrink-0 text-gray-400" />
             </div>
 
-            {/* Статус dropdown */}
-            <select
-              value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value as OrderStatus | 'all')}
-              className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
-            >
-              <option value="all">Все статусы</option>
-              <option value="new">Новый</option>
-              <option value="partial">Частично отправлен</option>
-              <option value="sent">Отправлен</option>
-              <option value="completed">Завершён</option>
-              <option value="cancelled">Отменён</option>
-            </select>
+            {/* Статус */}
+            <div className="relative">
+              <select
+                value={statusFilter}
+                onChange={e => setStatusFilter(e.target.value as OrderStatus | 'all')}
+                className="h-9 appearance-none rounded-lg border border-gray-200 bg-white pl-3 pr-8 text-sm text-gray-700 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
+              >
+                <option value="all">Все статусы</option>
+                <option value="new">Новый</option>
+                <option value="completed">Завершён</option>
+                <option value="cancelled">Отменён</option>
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            </div>
 
             {/* Excel */}
             <button
               onClick={() => exportToExcel(filteredOrders)}
-              className="flex h-9 items-center gap-1.5 rounded-lg border border-green-600 bg-green-600 px-3 text-sm font-medium text-white hover:bg-green-700 hover:border-green-700 transition-colors"
+              className="flex h-9 items-center gap-1.5 rounded-lg border border-green-600 bg-green-600 px-3 text-sm font-medium text-white transition-colors hover:border-green-700 hover:bg-green-700"
             >
               <Download className="h-3.5 w-3.5" />
               Excel
@@ -162,72 +163,67 @@ export function OrderHistoryPage() {
         </div>
       </div>
 
-      {/* ── Список заказов ── */}
-      <div className="min-h-0 flex-1 overflow-y-auto bg-white px-6 py-5">
+      {/* ── Список ── */}
+      <div className="min-h-0 flex-1 overflow-y-auto bg-white">
         {filteredOrders.length === 0 ? (
           <EmptyState hasFilters={hasFilters} />
         ) : (
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+          <div className="overflow-hidden border-b border-gray-200 bg-white">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  {/* Checkbox */}
-                  <th className="w-10 px-3 py-2.5">
+                <tr className="h-14 border-b border-gray-200 bg-gray-50">
+                  <th className="w-14 px-3 py-2.5 text-center align-middle">
                     <input
                       type="checkbox"
                       checked={allChecked}
                       onChange={toggleAll}
-                      className="h-3.5 w-3.5 rounded border-gray-300 accent-gray-900 cursor-pointer"
+                      className="h-3.5 w-3.5 cursor-pointer rounded border-gray-300 accent-gray-900"
                     />
                   </th>
-                  {/* № */}
-                  <th className="w-10 px-2 py-2.5 text-center text-xs font-semibold text-gray-400">#</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500">Номер</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500" style={{ minWidth: 180 }}>Аптека</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500" style={{ minWidth: 180 }}>Оптовик</th>
-                  <th className="px-3 py-2.5 text-center text-xs font-semibold text-gray-500">Поз.</th>
-                  <th className="px-3 py-2.5 text-center text-xs font-semibold text-gray-500">Кол-во</th>
-                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-gray-500">Сумма</th>
-                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-gray-500">Дата</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500">Статус</th>
+                  <th className="w-8 px-2 py-2.5 text-center text-xs font-semibold uppercase text-gray-400">#</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase text-gray-500">Номер</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase text-gray-500" style={{ minWidth: 160 }}>Аптека</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase text-gray-500" style={{ minWidth: 160 }}>Оптовик</th>
+                  <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase text-gray-500">Поз.</th>
+                  <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase text-gray-500">Кол-во</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold uppercase text-gray-500">Сумма</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold uppercase text-gray-500">Дата</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase text-gray-500">Статус</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredOrders.map((order, idx) => {
                   const totalItems  = order.groups.reduce((s, g) => s + g.items.length, 0)
                   const isChecked   = checked.includes(order.id)
+                  const hasProposal = order.groups.some(g => g.distributorStatus === 'offer')
+
                   return (
                     <tr
                       key={order.id}
                       className={cn(
-                        'cursor-pointer transition-colors hover:bg-gray-50',
+                        'h-14 cursor-pointer transition-colors hover:bg-gray-50',
                         isChecked && 'bg-gray-50',
                       )}
                     >
-                      {/* Checkbox */}
-                      <td className="px-3 py-2" onClick={e => { e.stopPropagation(); toggleOne(order.id) }}>
+                      <td className="px-3 py-2.5 text-center align-middle" onClick={e => { e.stopPropagation(); toggleOne(order.id) }}>
                         <input
                           type="checkbox"
                           checked={isChecked}
                           onChange={() => toggleOne(order.id)}
-                          className="h-3.5 w-3.5 rounded border-gray-300 accent-gray-900 cursor-pointer"
+                          className="h-3.5 w-3.5 cursor-pointer rounded border-gray-300 accent-gray-900"
                         />
                       </td>
-                      {/* № */}
-                      <td className="px-2 py-2 text-center" onClick={() => navigate(`/orders/${order.id}`)}>
+                      <td className="px-2 py-2.5 text-center" onClick={() => navigate(`/orders/${order.id}`)}>
                         <span className="text-xs text-gray-400">{idx + 1}</span>
                       </td>
-                      {/* Номер */}
-                      <td className="px-3 py-2" onClick={() => navigate(`/orders/${order.id}`)}>
+                      <td className="px-3 py-2.5" onClick={() => navigate(`/orders/${order.id}`)}>
                         <span className="font-mono text-sm font-semibold text-gray-900">{order.number}</span>
                       </td>
-                      {/* Аптека */}
-                      <td className="px-3 py-2" onClick={() => navigate(`/orders/${order.id}`)}>
+                      <td className="px-3 py-2.5" onClick={() => navigate(`/orders/${order.id}`)}>
                         <p className="text-sm font-medium text-gray-900">{order.pharmacyName}</p>
                         <p className="text-xs text-gray-400">{order.pharmacyCity}</p>
                       </td>
-                      {/* Оптовик(и) */}
-                      <td className="px-3 py-2" onClick={() => navigate(`/orders/${order.id}`)}>
+                      <td className="px-3 py-2.5" onClick={() => navigate(`/orders/${order.id}`)}>
                         {order.groups.length === 1 ? (
                           <>
                             <p className="text-sm text-gray-700">{order.groups[0].distributorName}</p>
@@ -242,25 +238,27 @@ export function OrderHistoryPage() {
                           </>
                         )}
                       </td>
-                      {/* Поз. */}
-                      <td className="px-3 py-2 text-center" onClick={() => navigate(`/orders/${order.id}`)}>
+                      <td className="px-3 py-2.5 text-center" onClick={() => navigate(`/orders/${order.id}`)}>
                         <span className="text-sm text-gray-600">{totalItems}</span>
                       </td>
-                      {/* Кол-во */}
-                      <td className="px-3 py-2 text-center" onClick={() => navigate(`/orders/${order.id}`)}>
+                      <td className="px-3 py-2.5 text-center" onClick={() => navigate(`/orders/${order.id}`)}>
                         <span className="text-sm text-gray-600">{order.totalQty} шт.</span>
                       </td>
-                      {/* Сумма */}
-                      <td className="px-3 py-2 text-right" onClick={() => navigate(`/orders/${order.id}`)}>
+                      <td className="px-3 py-2.5 text-right" onClick={() => navigate(`/orders/${order.id}`)}>
                         <span className="text-sm font-semibold text-gray-900">{formatCurrency(order.totalSum)}</span>
                       </td>
-                      {/* Дата */}
-                      <td className="px-3 py-2 text-right" onClick={() => navigate(`/orders/${order.id}`)}>
+                      <td className="px-3 py-2.5 text-right" onClick={() => navigate(`/orders/${order.id}`)}>
                         <span className="text-sm text-gray-500">{formatDate(order.createdAt)}</span>
                       </td>
-                      {/* Статус */}
-                      <td className="px-3 py-2" onClick={() => navigate(`/orders/${order.id}`)}>
-                        <StatusBadge status={order.status} />
+                      <td className="px-3 py-2.5" onClick={() => navigate(`/orders/${order.id}`)}>
+                        <div className="flex items-center gap-1.5">
+                          <StatusBadge status={order.status} />
+                          {hasProposal && (
+                            <span title="Есть предложение от оптовика">
+                              <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
+                            </span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )
@@ -268,7 +266,6 @@ export function OrderHistoryPage() {
               </tbody>
             </table>
 
-            {/* Footer */}
             <div className="border-t border-gray-100 bg-gray-50 px-4 py-2">
               <p className="text-xs text-gray-400">
                 {checked.length > 0

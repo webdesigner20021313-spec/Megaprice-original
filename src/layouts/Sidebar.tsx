@@ -5,7 +5,6 @@ import {
   ShoppingCart,
   BarChart3,
   TrendingUp,
-  Terminal,
   Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -22,8 +21,8 @@ const navItems: NavItem[] = [
   { label: 'Потребность', path: '/need',              icon: <TrendingUp className="h-6 w-6" />,  end: true  },
   { label: 'Корзинка',    path: '/cart',              icon: <ShoppingCart className="h-6 w-6" />, end: true  },
   { label: 'Заказы',      path: '/orders',            icon: <ClipboardList className="h-6 w-6" />, end: false },
-  { label: 'Аналитика',   path: '/analytics/reports', icon: <BarChart3 className="h-6 w-6" />,    end: false },
-  { label: 'Пользователи', path: '/users',            icon: <Users className="h-6 w-6" />,        end: true  },
+  // { label: 'Аналитика',   path: '/analytics/reports', icon: <BarChart3 className="h-6 w-6" />,    end: false },
+  // { label: 'Пользователи', path: '/users',            icon: <Users className="h-6 w-6" />,        end: true  },
 ]
 
 export function Sidebar() {
@@ -33,9 +32,6 @@ export function Sidebar() {
     <aside className="flex h-screen w-[140px] shrink-0 flex-col bg-[#1C1917]">
       {/* Logo */}
       <div className="flex h-16 shrink-0 items-center justify-center border-b border-white/10">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg text-stone-400">
-          <Terminal className="h-5 w-5" />
-        </div>
       </div>
 
       {/* Nav */}
@@ -86,7 +82,7 @@ export function Sidebar() {
 
       {/* Version */}
       <div className="shrink-0 border-t border-[#6B7280] py-[16px]">
-        <p className="text-center text-[14px] text-[#6B7280]">v1.0.4</p>
+        <p className="text-center text-[14px] text-[#6B7280]">v1.0.8</p>
       </div>
     </aside>
   )

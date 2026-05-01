@@ -2,7 +2,7 @@ import type { Order } from '@/pages/orders/types'
 
 export const mockOrders: Order[] = [
 
-  // ── Новые (не отправлены) ─────────────────────────────────────────────────
+  // ── Новые (не отправлены) ──────────────────────────────────────────────────
 
   {
     id: 'ord-015',
@@ -21,7 +21,7 @@ export const mockOrders: Order[] = [
         distributorCity: 'Ташкент',
         contactType: 'telegram',
         contact: '@farmservis_bot',
-        sendStatus: 'pending',
+        distributorStatus: 'new',
         subtotal: 1_098_000,
         items: [
           { id: 'n1', medicineName: 'Аспирин 500мг №20',      manufacturer: 'Bayer',  country: 'Германия', quantity: 20, priceWithVat: 25_000 },
@@ -48,7 +48,7 @@ export const mockOrders: Order[] = [
         distributorCity: 'Ташкент',
         contactType: 'telegram',
         contact: '@tajmed_zakaz',
-        sendStatus: 'pending',
+        distributorStatus: 'new',
         subtotal: 1_350_000,
         items: [
           { id: 'n3', medicineName: 'Омепразол 20мг №28',  manufacturer: 'AstraZeneca', country: 'Швеция',  quantity: 10, priceWithVat: 45_000 },
@@ -61,17 +61,17 @@ export const mockOrders: Order[] = [
         distributorCity: 'Самарканд',
         contactType: 'email',
         contact: 'order@doridarmon.uz',
-        sendStatus: 'pending',
+        distributorStatus: 'new',
         subtotal: 815_000,
         items: [
-          { id: 'n5', medicineName: 'Цетиризин 10мг №10',  manufacturer: 'Pfizer',  country: 'США',      quantity: 15, priceWithVat: 22_000 },
-          { id: 'n6', medicineName: 'Лоратадин 10мг №10',  manufacturer: 'Actavis', country: 'Исландия', quantity: 10, priceWithVat: 28_000 },
+          { id: 'n5', medicineName: 'Цетиризин 10мг №10', manufacturer: 'Pfizer',  country: 'США',      quantity: 15, priceWithVat: 22_000 },
+          { id: 'n6', medicineName: 'Лоратадин 10мг №10', manufacturer: 'Actavis', country: 'Исландия', quantity: 10, priceWithVat: 28_000 },
         ],
       },
     ],
   },
 
-  // ── Частично отправлены ───────────────────────────────────────────────────
+  // ── Активные (частично отправлены) ────────────────────────────────────────
 
   {
     id: 'ord-017',
@@ -79,7 +79,7 @@ export const mockOrders: Order[] = [
     pharmacyName: 'Аптека «Hayot»',
     pharmacyAddress: 'ул. Навои, 5',
     pharmacyCity: 'Ташкент',
-    status: 'partial',
+    status: 'new',
     createdAt: '2026-04-29T11:20:00',
     totalQty: 62,
     totalSum: 2_437_000,
@@ -90,11 +90,12 @@ export const mockOrders: Order[] = [
         distributorCity: 'Ташкент',
         contactType: 'telegram',
         contact: '@farmservis_bot',
-        sendStatus: 'sent',
+        distributorStatus: 'sent',
+        sentAt: '2026-04-29T12:00:00',
         subtotal: 1_575_000,
         items: [
-          { id: 'p1', medicineName: 'Эналаприл 10мг №20',    manufacturer: 'Hexal',  country: 'Германия', quantity: 25, priceWithVat: 35_000 },
-          { id: 'p2', medicineName: 'Аспирин 500мг №20',      manufacturer: 'Bayer',  country: 'Германия', quantity: 18, priceWithVat: 25_000 },
+          { id: 'p1', medicineName: 'Эналаприл 10мг №20', manufacturer: 'Hexal', country: 'Германия', quantity: 25, priceWithVat: 35_000 },
+          { id: 'p2', medicineName: 'Аспирин 500мг №20',   manufacturer: 'Bayer', country: 'Германия', quantity: 18, priceWithVat: 25_000 },
         ],
       },
       {
@@ -103,12 +104,20 @@ export const mockOrders: Order[] = [
         distributorCity: 'Самарканд',
         contactType: 'email',
         contact: 'info@alfapharma.uz',
-        sendStatus: 'pending',
+        distributorStatus: 'offer',
+        sentAt: '2026-04-29T14:30:00',
         subtotal: 862_000,
         items: [
           { id: 'p3', medicineName: 'Нимесулид 100мг №20', manufacturer: 'Ranbaxy', country: 'Индия',   quantity: 12, priceWithVat: 42_000 },
           { id: 'p4', medicineName: 'Ибупрофен 400мг №20', manufacturer: 'Richter', country: 'Венгрия', quantity: 7,  priceWithVat: 18_750 },
         ],
+        proposal: {
+          receivedAt: '2026-04-30T09:15:00',
+          changes: [
+            { itemId: 'p3', type: 'quantity', oldValue: 12, newValue: 10 },
+            { itemId: 'p4', type: 'price',    oldValue: 18_750, newValue: 17_500 },
+          ],
+        },
       },
     ],
   },
@@ -119,7 +128,7 @@ export const mockOrders: Order[] = [
     pharmacyName: 'Аптека «Baraka»',
     pharmacyAddress: 'ул. Мустакиллик, 88',
     pharmacyCity: 'Фергана',
-    status: 'partial',
+    status: 'new',
     createdAt: '2026-04-28T14:05:00',
     totalQty: 80,
     totalSum: 3_280_000,
@@ -130,10 +139,11 @@ export const mockOrders: Order[] = [
         distributorCity: 'Ташкент',
         contactType: 'telegram',
         contact: '@tajmed_zakaz',
-        sendStatus: 'sent',
+        distributorStatus: 'sent',
+        sentAt: '2026-04-28T15:00:00',
         subtotal: 1_600_000,
         items: [
-          { id: 'q1', medicineName: 'Метформин 850мг №60', manufacturer: 'Teva',    country: 'Израиль', quantity: 50, priceWithVat: 32_000 },
+          { id: 'q1', medicineName: 'Метформин 850мг №60', manufacturer: 'Teva', country: 'Израиль', quantity: 50, priceWithVat: 32_000 },
         ],
       },
       {
@@ -142,7 +152,8 @@ export const mockOrders: Order[] = [
         distributorCity: 'Бухара',
         contactType: 'telegram',
         contact: '@tashfarm_orders',
-        sendStatus: 'sent',
+        distributorStatus: 'sent',
+        sentAt: '2026-04-28T15:30:00',
         subtotal: 875_000,
         items: [
           { id: 'q2', medicineName: 'Аспирин 500мг №20', manufacturer: 'Bayer', country: 'Германия', quantity: 35, priceWithVat: 25_000 },
@@ -154,17 +165,17 @@ export const mockOrders: Order[] = [
         distributorCity: 'Самарканд',
         contactType: 'email',
         contact: 'order@doridarmon.uz',
-        sendStatus: 'pending',
+        distributorStatus: 'new',
         subtotal: 805_000,
         items: [
-          { id: 'q3', medicineName: 'Омепразол 20мг №28',  manufacturer: 'AstraZeneca', country: 'Швеция',   quantity: 10, priceWithVat: 45_000 },
-          { id: 'q4', medicineName: 'Лоратадин 10мг №10',  manufacturer: 'Actavis',     country: 'Исландия', quantity: 5,  priceWithVat: 28_000 },
+          { id: 'q3', medicineName: 'Омепразол 20мг №28', manufacturer: 'AstraZeneca', country: 'Швеция',   quantity: 10, priceWithVat: 45_000 },
+          { id: 'q4', medicineName: 'Лоратадин 10мг №10', manufacturer: 'Actavis',     country: 'Исландия', quantity: 5,  priceWithVat: 28_000 },
         ],
       },
     ],
   },
 
-  // ── Отправлены ────────────────────────────────────────────────────────────
+  // ── Активные (все отправлены, ждут завершения) ────────────────────────────
 
   {
     id: 'ord-001',
@@ -172,7 +183,7 @@ export const mockOrders: Order[] = [
     pharmacyName: 'Аптека «Олмос»',
     pharmacyAddress: 'ул. Амира Темура, 47',
     pharmacyCity: 'Ташкент',
-    status: 'sent',
+    status: 'new',
     createdAt: '2026-04-20T09:15:00',
     totalQty: 45,
     totalSum: 1_195_000,
@@ -183,7 +194,8 @@ export const mockOrders: Order[] = [
         distributorCity: 'Ташкент',
         contactType: 'telegram',
         contact: '@farmservis_bot',
-        sendStatus: 'sent',
+        distributorStatus: 'sent',
+        sentAt: '2026-04-20T10:00:00',
         subtotal: 820_000,
         items: [
           { id: 'i1', medicineName: 'Аспирин 500мг №20',      manufacturer: 'Bayer',  country: 'Германия', quantity: 10, priceWithVat: 25_000 },
@@ -196,11 +208,25 @@ export const mockOrders: Order[] = [
         distributorCity: 'Ташкент',
         contactType: 'telegram',
         contact: '@tajmed_zakaz',
-        sendStatus: 'sent',
+        distributorStatus: 'offer',
+        sentAt: '2026-04-20T10:15:00',
         subtotal: 375_000,
         items: [
           { id: 'i3', medicineName: 'Ибупрофен 400мг №20', manufacturer: 'Richter', country: 'Венгрия', quantity: 20, priceWithVat: 18_750 },
         ],
+        proposal: {
+          receivedAt: '2026-04-21T11:30:00',
+          changes: [
+            {
+              itemId: 'i3',
+              type: 'substitute',
+              oldValue: 'Ибупрофен 400мг №20',
+              newValue: 'Ибупрофен-Хемофарм 400мг №20',
+              newManufacturer: 'Hemofarm',
+              newCountry: 'Сербия',
+            },
+          ],
+        },
       },
     ],
   },
@@ -211,7 +237,7 @@ export const mockOrders: Order[] = [
     pharmacyName: 'Аптека «Shifо»',
     pharmacyAddress: 'пр. Регистан, 12',
     pharmacyCity: 'Самарканд',
-    status: 'sent',
+    status: 'new',
     createdAt: '2026-04-20T11:30:00',
     totalQty: 25,
     totalSum: 884_000,
@@ -222,7 +248,8 @@ export const mockOrders: Order[] = [
         distributorCity: 'Ташкент',
         contactType: 'telegram',
         contact: '@tajmed_zakaz',
-        sendStatus: 'sent',
+        distributorStatus: 'sent',
+        sentAt: '2026-04-20T12:00:00',
         subtotal: 884_000,
         items: [
           { id: 'i4', medicineName: 'Омепразол 20мг №28',  manufacturer: 'AstraZeneca', country: 'Швеция',   quantity: 8,  priceWithVat: 45_000 },
@@ -239,7 +266,7 @@ export const mockOrders: Order[] = [
     pharmacyName: 'Аптека «Baraka»',
     pharmacyAddress: 'ул. Мустакиллик, 88',
     pharmacyCity: 'Фергана',
-    status: 'sent',
+    status: 'new',
     createdAt: '2026-04-19T14:20:00',
     totalQty: 16,
     totalSum: 472_000,
@@ -250,7 +277,8 @@ export const mockOrders: Order[] = [
         distributorCity: 'Самарканд',
         contactType: 'email',
         contact: 'order@doridarmon.uz',
-        sendStatus: 'sent',
+        distributorStatus: 'sent',
+        sentAt: '2026-04-19T15:30:00',
         subtotal: 472_000,
         items: [
           { id: 'i7', medicineName: 'Нимесулид 100мг №20', manufacturer: 'Ranbaxy', country: 'Индия', quantity: 6,  priceWithVat: 42_000 },
@@ -266,7 +294,7 @@ export const mockOrders: Order[] = [
     pharmacyName: 'Аптека «Hayot»',
     pharmacyAddress: 'ул. Навои, 5',
     pharmacyCity: 'Ташкент',
-    status: 'sent',
+    status: 'new',
     createdAt: '2026-04-18T10:05:00',
     totalQty: 45,
     totalSum: 1_405_000,
@@ -277,7 +305,8 @@ export const mockOrders: Order[] = [
         distributorCity: 'Ташкент',
         contactType: 'telegram',
         contact: '@farmservis_bot',
-        sendStatus: 'sent',
+        distributorStatus: 'sent',
+        sentAt: '2026-04-18T11:00:00',
         subtotal: 1_405_000,
         items: [
           { id: 'i9',  medicineName: 'Эналаприл 10мг №20',    manufacturer: 'Hexal',  country: 'Германия', quantity: 15, priceWithVat: 35_000 },
@@ -294,7 +323,7 @@ export const mockOrders: Order[] = [
     pharmacyName: 'Аптека «Олмос»',
     pharmacyAddress: 'ул. Амира Темура, 47',
     pharmacyCity: 'Ташкент',
-    status: 'sent',
+    status: 'new',
     createdAt: '2026-04-17T16:45:00',
     totalQty: 38,
     totalSum: 818_500,
@@ -305,7 +334,8 @@ export const mockOrders: Order[] = [
         distributorCity: 'Ташкент',
         contactType: 'telegram',
         contact: '@tajmed_zakaz',
-        sendStatus: 'sent',
+        distributorStatus: 'sent',
+        sentAt: '2026-04-17T17:30:00',
         subtotal: 818_500,
         items: [
           { id: 'i12', medicineName: 'Ибупрофен 400мг №20', manufacturer: 'Richter', country: 'Венгрия', quantity: 30, priceWithVat: 18_750 },
@@ -321,7 +351,7 @@ export const mockOrders: Order[] = [
     pharmacyName: 'Аптека «Shifо»',
     pharmacyAddress: 'пр. Регистан, 12',
     pharmacyCity: 'Самарканд',
-    status: 'sent',
+    status: 'new',
     createdAt: '2026-04-16T08:30:00',
     totalQty: 40,
     totalSum: 1_367_000,
@@ -332,7 +362,8 @@ export const mockOrders: Order[] = [
         distributorCity: 'Ташкент',
         contactType: 'telegram',
         contact: '@farmservis_bot',
-        sendStatus: 'sent',
+        distributorStatus: 'sent',
+        sentAt: '2026-04-16T09:00:00',
         subtotal: 855_000,
         items: [
           { id: 'i14', medicineName: 'Омепразол 20мг №28',  manufacturer: 'AstraZeneca', country: 'Швеция', quantity: 5,  priceWithVat: 45_000 },
@@ -345,7 +376,8 @@ export const mockOrders: Order[] = [
         distributorCity: 'Самарканд',
         contactType: 'email',
         contact: 'order@doridarmon.uz',
-        sendStatus: 'sent',
+        distributorStatus: 'sent',
+        sentAt: '2026-04-16T09:15:00',
         subtotal: 512_000,
         items: [
           { id: 'i16', medicineName: 'Цетиризин 10мг №10', manufacturer: 'Pfizer',  country: 'США',      quantity: 8,  priceWithVat: 22_000 },
@@ -361,7 +393,7 @@ export const mockOrders: Order[] = [
     pharmacyName: 'Аптека «Baraka»',
     pharmacyAddress: 'ул. Мустакиллик, 88',
     pharmacyCity: 'Фергана',
-    status: 'sent',
+    status: 'new',
     createdAt: '2026-04-15T13:15:00',
     totalQty: 70,
     totalSum: 1_950_000,
@@ -372,7 +404,8 @@ export const mockOrders: Order[] = [
         distributorCity: 'Бухара',
         contactType: 'telegram',
         contact: '@tashfarm_orders',
-        sendStatus: 'sent',
+        distributorStatus: 'sent',
+        sentAt: '2026-04-15T14:00:00',
         subtotal: 1_950_000,
         items: [
           { id: 'i18', medicineName: 'Аспирин 500мг №20',  manufacturer: 'Bayer', country: 'Германия', quantity: 50, priceWithVat: 25_000 },
@@ -388,7 +421,7 @@ export const mockOrders: Order[] = [
     pharmacyName: 'Аптека «Hayot»',
     pharmacyAddress: 'ул. Навои, 5',
     pharmacyCity: 'Ташкент',
-    status: 'sent',
+    status: 'new',
     createdAt: '2026-04-14T11:00:00',
     totalQty: 25,
     totalSum: 950_000,
@@ -399,7 +432,8 @@ export const mockOrders: Order[] = [
         distributorCity: 'Самарканд',
         contactType: 'email',
         contact: 'order@doridarmon.uz',
-        sendStatus: 'sent',
+        distributorStatus: 'sent',
+        sentAt: '2026-04-14T12:00:00',
         subtotal: 950_000,
         items: [
           { id: 'i20', medicineName: 'Амоксициллин 500мг №16', manufacturer: 'Sandoz', country: 'Словения', quantity: 25, priceWithVat: 38_000 },
@@ -408,7 +442,7 @@ export const mockOrders: Order[] = [
     ],
   },
 
-  // ── Завершены ─────────────────────────────────────────────────────────────
+  // ── Завершены ──────────────────────────────────────────────────────────────
 
   {
     id: 'ord-009',
@@ -427,7 +461,8 @@ export const mockOrders: Order[] = [
         distributorCity: 'Ташкент',
         contactType: 'telegram',
         contact: '@tajmed_zakaz',
-        sendStatus: 'sent',
+        distributorStatus: 'sent',
+        sentAt: '2026-04-13T10:00:00',
         subtotal: 1_710_000,
         items: [
           { id: 'i21', medicineName: 'Метформин 850мг №60', manufacturer: 'Teva',    country: 'Израиль', quantity: 30, priceWithVat: 32_000 },
@@ -454,7 +489,8 @@ export const mockOrders: Order[] = [
         distributorCity: 'Ташкент',
         contactType: 'telegram',
         contact: '@farmservis_bot',
-        sendStatus: 'sent',
+        distributorStatus: 'sent',
+        sentAt: '2026-04-12T16:00:00',
         subtotal: 1_263_000,
         items: [
           { id: 'i23', medicineName: 'Нимесулид 100мг №20', manufacturer: 'Ranbaxy',     country: 'Индия',    quantity: 10, priceWithVat: 42_000 },
@@ -482,7 +518,8 @@ export const mockOrders: Order[] = [
         distributorCity: 'Бухара',
         contactType: 'telegram',
         contact: '@tashfarm_orders',
-        sendStatus: 'sent',
+        distributorStatus: 'sent',
+        sentAt: '2026-04-10T11:00:00',
         subtotal: 2_500_000,
         items: [
           { id: 'i26', medicineName: 'Аспирин 500мг №20', manufacturer: 'Bayer', country: 'Германия', quantity: 100, priceWithVat: 25_000 },
@@ -494,7 +531,8 @@ export const mockOrders: Order[] = [
         distributorCity: 'Ташкент',
         contactType: 'telegram',
         contact: '@farmservis_bot',
-        sendStatus: 'sent',
+        distributorStatus: 'sent',
+        sentAt: '2026-04-10T11:00:00',
         subtotal: 1_900_000,
         items: [
           { id: 'i27', medicineName: 'Амоксициллин 500мг №16', manufacturer: 'Sandoz', country: 'Словения', quantity: 50, priceWithVat: 38_000 },
@@ -520,7 +558,8 @@ export const mockOrders: Order[] = [
         distributorCity: 'Ташкент',
         contactType: 'telegram',
         contact: '@farmservis_bot',
-        sendStatus: 'sent',
+        distributorStatus: 'sent',
+        sentAt: '2026-04-08T15:00:00',
         subtotal: 2_060_000,
         items: [
           { id: 'i28', medicineName: 'Эналаприл 10мг №20', manufacturer: 'Hexal',  country: 'Германия', quantity: 40, priceWithVat: 35_000 },
@@ -547,7 +586,8 @@ export const mockOrders: Order[] = [
         distributorCity: 'Самарканд',
         contactType: 'email',
         contact: 'order@doridarmon.uz',
-        sendStatus: 'sent',
+        distributorStatus: 'sent',
+        sentAt: '2026-04-05T10:30:00',
         subtotal: 1_257_000,
         items: [
           { id: 'i30', medicineName: 'Метформин 850мг №60', manufacturer: 'Teva',    country: 'Израиль', quantity: 20, priceWithVat: 32_000 },
@@ -575,17 +615,18 @@ export const mockOrders: Order[] = [
         distributorCity: 'Ташкент',
         contactType: 'telegram',
         contact: '@tajmed_zakaz',
-        sendStatus: 'sent',
+        distributorStatus: 'sent',
+        sentAt: '2026-04-03T13:00:00',
         subtotal: 550_000,
         items: [
-          { id: 'i33', medicineName: 'Омепразол 20мг №28',  manufacturer: 'AstraZeneca', country: 'Швеция',   quantity: 6,  priceWithVat: 45_000 },
-          { id: 'i34', medicineName: 'Лоратадин 10мг №10',  manufacturer: 'Actavis',     country: 'Исландия', quantity: 10, priceWithVat: 28_000 },
+          { id: 'i33', medicineName: 'Омепразол 20мг №28', manufacturer: 'AstraZeneca', country: 'Швеция',   quantity: 6,  priceWithVat: 45_000 },
+          { id: 'i34', medicineName: 'Лоратадин 10мг №10', manufacturer: 'Actavis',     country: 'Исландия', quantity: 10, priceWithVat: 28_000 },
         ],
       },
     ],
   },
 
-  // ── Отменён ───────────────────────────────────────────────────────────────
+  // ── Отменены ───────────────────────────────────────────────────────────────
 
   {
     id: 'ord-019',
@@ -604,11 +645,50 @@ export const mockOrders: Order[] = [
         distributorCity: 'Самарканд',
         contactType: 'email',
         contact: 'info@alfapharma.uz',
-        sendStatus: 'pending',
+        distributorStatus: 'cancelled',
         subtotal: 760_000,
         items: [
           { id: 'c1', medicineName: 'Нимесулид 100мг №20', manufacturer: 'Ranbaxy', country: 'Индия',   quantity: 10, priceWithVat: 42_000 },
           { id: 'c2', medicineName: 'Ибупрофен 400мг №20', manufacturer: 'Richter', country: 'Венгрия', quantity: 10, priceWithVat: 18_750 },
+        ],
+      },
+    ],
+  },
+
+  {
+    id: 'ord-020',
+    number: 'ЗАК-09841',
+    pharmacyName: 'Аптека «Baraka»',
+    pharmacyAddress: 'ул. Мустакиллик, 88',
+    pharmacyCity: 'Фергана',
+    status: 'cancelled',
+    createdAt: '2026-04-25T16:00:00',
+    totalQty: 30,
+    totalSum: 1_050_000,
+    groups: [
+      {
+        distributorId: 'ds2',
+        distributorName: 'Tajmed',
+        distributorCity: 'Ташкент',
+        contactType: 'telegram',
+        contact: '@tajmed_zakaz',
+        distributorStatus: 'cancelled',
+        subtotal: 640_000,
+        items: [
+          { id: 'd1', medicineName: 'Эналаприл 10мг №20', manufacturer: 'Hexal', country: 'Германия', quantity: 10, priceWithVat: 35_000 },
+          { id: 'd2', medicineName: 'Аспирин 500мг №20',  manufacturer: 'Bayer', country: 'Германия', quantity: 12, priceWithVat: 25_000 },
+        ],
+      },
+      {
+        distributorId: 'ds4',
+        distributorName: 'Ташфарм',
+        distributorCity: 'Бухара',
+        contactType: 'telegram',
+        contact: '@tashfarm_orders',
+        distributorStatus: 'cancelled',
+        subtotal: 410_000,
+        items: [
+          { id: 'd3', medicineName: 'Омепразол 20мг №28', manufacturer: 'AstraZeneca', country: 'Швеция', quantity: 8, priceWithVat: 45_000 },
         ],
       },
     ],
