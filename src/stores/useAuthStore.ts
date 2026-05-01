@@ -26,6 +26,26 @@ const MOCK_USERS = [
       avatar: 'АК',
     },
   },
+  {
+    login: 'manager@megaprice.uz',
+    password: 'Manager2026',
+    user: {
+      name: 'Зафар Рахимов',
+      email: 'manager@megaprice.uz',
+      role: 'Менеджер',
+      avatar: 'ЗР',
+    },
+  },
+  {
+    login: 'operator@megaprice.uz',
+    password: 'Operator2026',
+    user: {
+      name: 'Бобур Тошматов',
+      email: 'operator@megaprice.uz',
+      role: 'Оператор',
+      avatar: 'БТ',
+    },
+  },
 ]
 
 export const useAuthStore = create<AuthState>()(
