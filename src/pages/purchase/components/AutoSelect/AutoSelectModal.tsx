@@ -334,7 +334,7 @@ export function AutoSelectModal({ medicines, offers, onClose, onConfirm }: AutoS
         {/* ── Шапка ──────────────────────────────────────────────────────────── */}
         <div className="flex shrink-0 items-center justify-between border-b border-gray-200 px-5 py-4">
           <div>
-            <p className="text-base font-semibold text-gray-900">Авто подбор</p>
+            <p className="text-base font-semibold text-gray-900">Авто-подбор</p>
             <p className="mt-0.5 text-xs text-gray-400">
               {medicines.length} {medicines.length === 1 ? 'препарат' : 'препаратов'} · пустые поля = без ограничений
             </p>

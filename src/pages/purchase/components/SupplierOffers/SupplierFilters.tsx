@@ -202,7 +202,7 @@ export function SupplierFilters({
         <SearchableDropdown
           open={openDist}
           onToggle={() => setOpenDist((v) => !v)}
-          label="Дистрибьютор"
+          label="Дистрибутор"
           count={distributorFilter.length}
           items={distributors}
           selected={distributorFilter}

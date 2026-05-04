@@ -47,7 +47,7 @@ function SortIcon({ field, sortField, sortDir }: { field: SortField; sortField: 
 }
 
 const COL_LABELS: Record<ReorderColKey, string> = {
-  distributor: 'Дистрибьютор',
+  distributor: 'Дистрибутор',
   expiry:      'Годен до',
   payment:     'Оплата',
   price:       'Цена с НДС',
