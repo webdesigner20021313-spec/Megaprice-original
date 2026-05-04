@@ -7,9 +7,10 @@ import {
   Trash2, AlertCircle, Check, Send, X,
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
+import logoSvgRaw from '@/assets/logo.svg?raw'
 import { cn } from '@/lib/utils'
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/format'
-import { mockOrders } from '@/mocks/orders.mocks'
+import { useOrdersStore } from '@/stores/useOrdersStore'
 import {
   ORDER_STATUS_CONFIG,
   DISTRIBUTOR_STATUS_CONFIG,
@@ -58,11 +59,11 @@ function downloadGroupExcel(group: OrderDistributorGroup, orderNumber: string) {
 function downloadFullExcel(order: Order) {
   const rows: Record<string, string | number>[] = []
   for (const group of order.groups) {
-    rows.push({ 'Оптовик': group.distributorName, 'Город': group.distributorCity, 'Препарат': '', 'Производитель': '', 'Страна': '', 'Кол-во': '', 'Цена с НДС': '', 'Итого': '' })
+    rows.push({ 'Дистрибутор': group.distributorName, 'Город': group.distributorCity, 'Препарат': '', 'Производитель': '', 'Страна': '', 'Кол-во': '', 'Цена с НДС': '', 'Итого': '' })
     for (const item of group.items) {
-      rows.push({ 'Оптовик': '', 'Город': '', 'Препарат': item.medicineName, 'Производитель': item.manufacturer, 'Страна': item.country, 'Кол-во': item.quantity, 'Цена с НДС': item.priceWithVat, 'Итого': item.quantity * item.priceWithVat })
+      rows.push({ 'Дистрибутор': '', 'Город': '', 'Препарат': item.medicineName, 'Производитель': item.manufacturer, 'Страна': item.country, 'Кол-во': item.quantity, 'Цена с НДС': item.priceWithVat, 'Итого': item.quantity * item.priceWithVat })
     }
-    rows.push({ 'Оптовик': `Итого ${group.distributorName}`, 'Город': '', 'Препарат': '', 'Производитель': '', 'Страна': '', 'Кол-во': group.items.reduce((s, i) => s + i.quantity, 0), 'Цена с НДС': '', 'Итого': group.subtotal })
+    rows.push({ 'Дистрибутор': `Итого ${group.distributorName}`, 'Город': '', 'Препарат': '', 'Производитель': '', 'Страна': '', 'Кол-во': group.items.reduce((s, i) => s + i.quantity, 0), 'Цена с НДС': '', 'Итого': group.subtotal })
   }
   const ws = XLSX.utils.json_to_sheet(rows)
   const wb = XLSX.utils.book_new()
@@ -70,10 +71,65 @@ function downloadFullExcel(order: Order) {
   XLSX.writeFile(wb, `${order.number}.xlsx`)
 }
 
+// ─── Logo as base64 data URI (original SVG file, no path errors) ─────────────
+function getLogoImgHtml() {
+  const b64 = btoa(unescape(encodeURIComponent(logoSvgRaw)))
+  return `<img src="data:image/svg+xml;base64,${b64}" height="48" style="display:block;margin-bottom:6px;" alt="MegaPrice"/>`
+}
+
+// ─── Common print styles ──────────────────────────────────────────────────────
+const PRINT_STYLES = `*{margin:0;padding:0;box-sizing:border-box;}body{font-family:-apple-system,Arial,sans-serif;color:#111827;padding:32px;font-size:13px;}.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;border-bottom:2px solid #111827;padding-bottom:16px;}.order-num{font-size:22px;font-weight:700;margin-top:8px;}.order-date{margin-top:3px;font-size:12px;color:#6b7280;}.meta{display:grid;gap:16px;margin-bottom:24px;padding:14px 16px;background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb;}.meta-item label{font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:3px;}.meta-item .val{font-size:13px;font-weight:600;color:#111827;}.meta-item .sub{font-size:11px;color:#6b7280;margin-top:2px;}table{width:100%;border-collapse:collapse;margin-bottom:16px;}thead tr{background:#f9fafb;border-bottom:2px solid #e5e7eb;}th{padding:9px 12px;font-size:10px;font-weight:700;color:#6b7280;text-align:left;text-transform:uppercase;letter-spacing:0.04em;}.dist-row td{padding:7px 12px;font-weight:700;font-size:12px;background:#f3f4f6;border-top:2px solid #e5e7eb;border-bottom:1px solid #e5e7eb;color:#374151;}.data-row td{padding:8px 12px;font-size:12px;border-bottom:1px solid #f3f4f6;}.subtotal-row td{padding:7px 12px;font-size:12px;border-top:1px solid #e5e7eb;background:#f9fafb;}.total-row td{padding:11px 12px;font-size:14px;font-weight:700;background:#111827;color:#fff;}@media print{body{padding:16px;}}`
+
 function printGroupInvoice(group: OrderDistributorGroup, order: Order) {
   const win = window.open('', '_blank')
   if (!win) return
-  win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Инвойс ${order.number} — ${group.distributorName}</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:-apple-system,Arial,sans-serif;color:#111827;padding:32px;font-size:13px;}.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;}.logo{font-size:20px;font-weight:800;letter-spacing:-0.5px;}.order-num{font-size:22px;font-weight:700;margin-top:4px;}.meta{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;padding:16px;background:#f9fafb;border-radius:8px;}.meta-item label{font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:4px;}.meta-item span{font-size:13px;font-weight:600;}table{width:100%;border-collapse:collapse;margin-bottom:16px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;}thead tr{background:#f9fafb;border-bottom:1px solid #e5e7eb;}th{padding:10px 12px;font-size:11px;font-weight:600;color:#6b7280;text-align:left;text-transform:uppercase;letter-spacing:0.03em;}.total-row td{padding:12px;font-size:14px;font-weight:700;background:#111827;color:#fff;}@media print{body{padding:16px;}}</style></head><body><div class="header"><div><div class="logo">MegaPrice</div><div class="order-num">${order.number} — ${group.distributorName}</div><div style="margin-top:4px;font-size:12px;color:#6b7280;">${formatDateTime(order.createdAt)}</div></div></div><div class="meta"><div class="meta-item"><label>Аптека</label><span>${order.pharmacyName}</span><div style="font-size:11px;color:#6b7280;margin-top:2px;">${order.pharmacyAddress}, ${order.pharmacyCity}</div></div><div class="meta-item"><label>Оптовик</label><span>${group.distributorName}</span><div style="font-size:11px;color:#6b7280;margin-top:2px;">${group.distributorCity} · ${group.contact}</div></div></div><table><thead><tr><th>Препарат</th><th>Производитель</th><th style="text-align:center;">Кол-во</th><th style="text-align:right;">Цена / шт</th><th style="text-align:right;">Итого</th></tr></thead><tbody>${group.items.map((item, idx) => `<tr style="border-bottom:1px solid #f3f4f6;background:${idx % 2 === 1 ? '#f9fafb' : '#fff'}"><td style="padding:8px 12px;font-size:12px;">${item.medicineName}</td><td style="padding:8px 12px;font-size:12px;color:#6b7280;">${item.manufacturer}</td><td style="padding:8px 12px;font-size:12px;text-align:center;">${item.quantity}</td><td style="padding:8px 12px;font-size:12px;text-align:right;">${item.priceWithVat.toLocaleString('ru-RU')} UZS</td><td style="padding:8px 12px;font-size:12px;text-align:right;font-weight:600;">${(item.quantity * item.priceWithVat).toLocaleString('ru-RU')} UZS</td></tr>`).join('')}</tbody><tfoot><tr class="total-row"><td colspan="4" style="text-align:right;">ИТОГО</td><td style="text-align:right;">${group.subtotal.toLocaleString('ru-RU')} UZS</td></tr></tfoot></table></body></html>`)
+  const itemsHtml = group.items.map((item, idx) =>
+    `<tr class="data-row" style="background:${idx % 2 === 1 ? '#f9fafb' : '#fff'}">
+      <td>${item.medicineName}</td>
+      <td style="color:#6b7280">${item.manufacturer}</td>
+      <td style="text-align:center">${item.quantity}</td>
+      <td style="text-align:right">${item.priceWithVat.toLocaleString('ru-RU')} UZS</td>
+      <td style="text-align:right;font-weight:600">${(item.quantity * item.priceWithVat).toLocaleString('ru-RU')} UZS</td>
+    </tr>`
+  ).join('')
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Инвойс ${order.number}</title><style>${PRINT_STYLES}</style></head><body>
+    <div class="header">
+      <div>
+        ${getLogoImgHtml()}
+        <div class="order-num">Инвойс ${order.number}</div>
+        <div class="order-date">${formatDateTime(order.createdAt)}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Статус</div>
+        <div style="font-size:14px;font-weight:700">${ORDER_STATUS_CONFIG[order.status].label}</div>
+      </div>
+    </div>
+    <div class="meta" style="grid-template-columns:1fr 1fr">
+      <div class="meta-item">
+        <label>Аптека</label>
+        <div class="val">${order.pharmacyName}</div>
+        <div class="sub">${order.pharmacyAddress}, ${order.pharmacyCity}</div>
+      </div>
+      <div class="meta-item">
+        <label>Дистрибутор</label>
+        <div class="val">${group.distributorName}</div>
+        <div class="sub">${group.distributorCity} · ${group.contact}</div>
+      </div>
+    </div>
+    <table>
+      <thead><tr>
+        <th>Препарат</th><th>Производитель</th>
+        <th style="text-align:center">Кол-во</th>
+        <th style="text-align:right">Цена / шт</th>
+        <th style="text-align:right">Итого</th>
+      </tr></thead>
+      <tbody>${itemsHtml}</tbody>
+      <tfoot><tr class="total-row">
+        <td colspan="4" style="text-align:right">ИТОГО</td>
+        <td style="text-align:right">${group.subtotal.toLocaleString('ru-RU')} UZS</td>
+      </tr></tfoot>
+    </table>
+  </body></html>`)
   win.document.close()
   win.print()
 }
@@ -81,13 +137,63 @@ function printGroupInvoice(group: OrderDistributorGroup, order: Order) {
 function printFullInvoice(order: Order) {
   const win = window.open('', '_blank')
   if (!win) return
-  const totalItems = order.groups.reduce((s, g) => s + g.items.length, 0)
-  const groupsHtml = order.groups.map(group => `
-    ${order.groups.length > 1 ? `<tr style="background:#f9fafb;border-top:2px solid #e5e7eb;"><td colspan="5" style="padding:8px 12px;font-weight:700;font-size:13px;">${group.distributorName} — ${group.distributorCity}</td></tr>` : ''}
-    ${group.items.map((item, idx) => `<tr style="border-bottom:1px solid #f3f4f6;background:${idx % 2 === 1 ? '#f9fafb' : '#fff'}"><td style="padding:8px 12px;font-size:12px;">${item.medicineName}</td><td style="padding:8px 12px;font-size:12px;color:#6b7280;">${item.manufacturer}</td><td style="padding:8px 12px;font-size:12px;text-align:center;">${item.quantity}</td><td style="padding:8px 12px;font-size:12px;text-align:right;">${item.priceWithVat.toLocaleString('ru-RU')} UZS</td><td style="padding:8px 12px;font-size:12px;text-align:right;font-weight:600;">${(item.quantity * item.priceWithVat).toLocaleString('ru-RU')} UZS</td></tr>`).join('')}
-    ${order.groups.length > 1 ? `<tr style="background:#f9fafb;border-top:1px solid #e5e7eb;"><td colspan="4" style="padding:6px 12px;font-size:12px;text-align:right;color:#6b7280;">Итого ${group.distributorName}:</td><td style="padding:6px 12px;font-size:12px;text-align:right;font-weight:700;">${group.subtotal.toLocaleString('ru-RU')} UZS</td></tr>` : ''}
-  `).join('')
-  win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Инвойс ${order.number}</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:-apple-system,Arial,sans-serif;color:#111827;padding:32px;font-size:13px;}.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;}.logo{font-size:20px;font-weight:800;letter-spacing:-0.5px;}.order-num{font-size:24px;font-weight:700;margin-top:4px;}.meta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;padding:16px;background:#f9fafb;border-radius:8px;}.meta-item label{font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:4px;}.meta-item span{font-size:13px;font-weight:600;}table{width:100%;border-collapse:collapse;margin-bottom:16px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;}thead tr{background:#f9fafb;border-bottom:1px solid #e5e7eb;}th{padding:10px 12px;font-size:11px;font-weight:600;color:#6b7280;text-align:left;text-transform:uppercase;letter-spacing:0.03em;}.total-row td{padding:12px;font-size:14px;font-weight:700;background:#111827;color:#fff;}@media print{body{padding:16px;}}</style></head><body><div class="header"><div><div class="logo">MegaPrice</div><div class="order-num">${order.number}</div><div style="margin-top:4px;font-size:12px;color:#6b7280;">${formatDateTime(order.createdAt)}</div></div><div style="text-align:right;font-size:12px;color:#6b7280;"><div style="font-weight:600;color:#111827;font-size:14px;">${ORDER_STATUS_CONFIG[order.status].label}</div></div></div><div class="meta"><div class="meta-item"><label>Аптека</label><span>${order.pharmacyName}</span><div style="font-size:11px;color:#6b7280;margin-top:2px;">${order.pharmacyAddress}, ${order.pharmacyCity}</div></div><div class="meta-item"><label>Позиций / Единиц</label><span>${totalItems} поз. / ${order.totalQty} ед.</span></div><div class="meta-item"><label>Сумма заказа</label><span style="font-size:16px;">${order.totalSum.toLocaleString('ru-RU')} UZS</span></div></div><table><thead><tr><th>Препарат</th><th>Производитель</th><th style="text-align:center;">Кол-во</th><th style="text-align:right;">Цена / шт</th><th style="text-align:right;">Итого</th></tr></thead><tbody>${groupsHtml}</tbody><tfoot><tr class="total-row"><td colspan="4" style="text-align:right;">ИТОГО</td><td style="text-align:right;">${order.totalSum.toLocaleString('ru-RU')} UZS</td></tr></tfoot></table></body></html>`)
+  const totalItems  = order.groups.reduce((s, g) => s + g.items.length, 0)
+  const singleDist  = order.groups.length === 1 ? order.groups[0] : null
+  const groupsHtml  = order.groups.map(group =>
+    `<tr class="dist-row"><td colspan="5">${group.distributorName} — ${group.distributorCity}</td></tr>
+     ${group.items.map((item, idx) =>
+       `<tr class="data-row" style="background:${idx % 2 === 1 ? '#f9fafb' : '#fff'}">
+         <td>${item.medicineName}</td>
+         <td style="color:#6b7280">${item.manufacturer}</td>
+         <td style="text-align:center">${item.quantity}</td>
+         <td style="text-align:right">${item.priceWithVat.toLocaleString('ru-RU')} UZS</td>
+         <td style="text-align:right;font-weight:600">${(item.quantity * item.priceWithVat).toLocaleString('ru-RU')} UZS</td>
+       </tr>`
+     ).join('')}
+     ${order.groups.length > 1 ? `<tr class="subtotal-row"><td colspan="4" style="text-align:right;color:#6b7280">Итого ${group.distributorName}:</td><td style="text-align:right;font-weight:700">${group.subtotal.toLocaleString('ru-RU')} UZS</td></tr>` : ''}`
+  ).join('')
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Инвойс ${order.number}</title><style>${PRINT_STYLES}</style></head><body>
+    <div class="header">
+      <div>
+        ${getLogoImgHtml()}
+        <div class="order-num">Инвойс ${order.number}</div>
+        <div class="order-date">${formatDateTime(order.createdAt)}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Статус</div>
+        <div style="font-size:14px;font-weight:700">${ORDER_STATUS_CONFIG[order.status].label}</div>
+      </div>
+    </div>
+    <div class="meta" style="grid-template-columns:${singleDist ? '1fr 1fr 1fr 1fr' : '1fr 1fr 1fr'}">
+      <div class="meta-item">
+        <label>Аптека</label>
+        <div class="val">${order.pharmacyName}</div>
+        <div class="sub">${order.pharmacyAddress}, ${order.pharmacyCity}</div>
+      </div>
+      ${singleDist ? `<div class="meta-item"><label>Дистрибутор</label><div class="val">${singleDist.distributorName}</div><div class="sub">${singleDist.distributorCity} · ${singleDist.contact}</div></div>` : ''}
+      <div class="meta-item">
+        <label>Позиций / Единиц</label>
+        <div class="val">${totalItems} поз. / ${order.totalQty} ед.</div>
+      </div>
+      <div class="meta-item">
+        <label>Сумма заказа</label>
+        <div class="val" style="font-size:15px">${order.totalSum.toLocaleString('ru-RU')} UZS</div>
+      </div>
+    </div>
+    <table>
+      <thead><tr>
+        <th>Препарат</th><th>Производитель</th>
+        <th style="text-align:center">Кол-во</th>
+        <th style="text-align:right">Цена / шт</th>
+        <th style="text-align:right">Итого</th>
+      </tr></thead>
+      <tbody>${groupsHtml}</tbody>
+      <tfoot><tr class="total-row">
+        <td colspan="4" style="text-align:right">ИТОГО</td>
+        <td style="text-align:right">${order.totalSum.toLocaleString('ru-RU')} UZS</td>
+      </tr></tfoot>
+    </table>
+  </body></html>`)
   win.document.close()
   win.print()
 }
@@ -178,7 +284,7 @@ function ProposalBlock({
         <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm font-semibold text-amber-900">Оптовик предложил изменения</p>
+            <p className="text-sm font-semibold text-amber-900">Дистрибутор предложил изменения</p>
             <span className="text-xs text-amber-600">{formatDateTime(proposal.receivedAt)}</span>
           </div>
 
@@ -353,7 +459,7 @@ function DistributorCard({
                       className="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                     >
                       <XCircle className="h-4 w-4 text-red-400" />
-                      Отменить оптовика
+                      Отменить дистрибутора
                     </button>
                   </>
                 )}
@@ -498,8 +604,9 @@ function DistributorCard({
 export function OrderDetailPage() {
   const { id }   = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const orders   = useOrdersStore(s => s.orders)
 
-  const rawOrder = mockOrders.find(o => o.id === id)
+  const rawOrder = orders.find(o => o.id === id)
 
   if (!rawOrder) {
     return (
@@ -737,7 +844,7 @@ function OrderDetailContent({ order: initialOrder }: { order: Order }) {
               icon={<Calendar className="h-4 w-4" />}
               label="Дата создания"
               value={formatDateTime(order.createdAt)}
-              sub={`${order.groups.length} ${order.groups.length === 1 ? 'оптовик' : 'оптовика'}`}
+              sub={`${order.groups.length} ${order.groups.length === 1 ? 'дистрибутор' : 'дистрибутора'}`}
             />
             <InfoCard
               icon={<Wallet className="h-4 w-4" />}
@@ -753,8 +860,8 @@ function OrderDetailContent({ order: initialOrder }: { order: Order }) {
               <AlertCircle className="h-4 w-4 shrink-0 text-amber-600" />
               <p className="text-sm text-amber-800">
                 {order.groups.filter(g => g.distributorStatus === 'offer').length === 1
-                  ? 'Один оптовик прислал предложение — рассмотрите его ниже'
-                  : `${order.groups.filter(g => g.distributorStatus === 'offer').length} оптовика прислали предложения — рассмотрите их ниже`
+                  ? 'Один дистрибутор прислал предложение — рассмотрите его ниже'
+                  : `${order.groups.filter(g => g.distributorStatus === 'offer').length} дистрибутора прислали предложения — рассмотрите их ниже`
                 }
               </p>
             </div>
@@ -836,7 +943,7 @@ function OrderDetailContent({ order: initialOrder }: { order: Order }) {
       {modal?.kind === 'cancel_order' && (
         <ConfirmModal
           title="Отменить заказ?"
-          description="Заказ и все оптовики будут отмечены как отменённые."
+          description="Заказ и все дистрибуторы будут отмечены как отменённые."
           confirmLabel="Отменить заказ"
           isDanger
           onConfirm={handleCancelOrder}
@@ -846,8 +953,8 @@ function OrderDetailContent({ order: initialOrder }: { order: Order }) {
       {modal?.kind === 'cancel_dist' && (
         <ConfirmModal
           title={`Отменить ${modal.distributorName}?`}
-          description="Заказ у этого оптовика будет отменён, сумма заказа пересчитается."
-          confirmLabel="Отменить оптовика"
+          description="Заказ у этого дистрибутора будет отменён, сумма заказа пересчитается."
+          confirmLabel="Отменить дистрибутора"
           isDanger
           onConfirm={() => handleCancelDistributor(modal.distributorId)}
           onClose={() => setModal(null)}

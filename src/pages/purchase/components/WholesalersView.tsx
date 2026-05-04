@@ -141,7 +141,7 @@ export function WholesalersView({ selectedId, onSelect }: WholesalersViewProps) 
               </th>
               <th style={{ padding: '0 16px', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden' }}
                 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                Оптовик
+                Дистрибутор
               </th>
               <th style={{ padding: '0 16px', textAlign: 'right', whiteSpace: 'nowrap', overflow: 'hidden' }}
                 className="text-xs font-semibold uppercase tracking-wide text-gray-500">

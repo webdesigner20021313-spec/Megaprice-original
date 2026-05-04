@@ -26,7 +26,7 @@ interface LocalResult {
 }
 
 // Пустой массив = нет ограничений
-// Иерархия алгоритма: город → оптовик → производитель → цена
+// Иерархия алгоритма: город → дистрибутор → производитель → цена
 interface Settings {
   cityFilter:        string[]
   supplierIds:       string[]
@@ -272,7 +272,7 @@ export function AutoSelectModal({ medicines, offers, onClose, onConfirm }: AutoS
     setS(p => ({ ...p, manufacturerNames: p.manufacturerNames.filter(x => x !== name) }))
   }
 
-  // ── Алгоритм: город → оптовик → производитель → цена ─────────────────────────
+  // ── Алгоритм: город → дистрибутор → производитель → цена ─────────────────────────
 
   function handleRun() {
     setStep('loading')
@@ -299,7 +299,7 @@ export function AutoSelectModal({ medicines, offers, onClose, onConfirm }: AutoS
             const region = DIST_META[o.distributor.id]?.region ?? o.distributor.city
             if (!s.cityFilter.includes(region)) return false
           }
-          // Уровень 2: оптовик
+          // Уровень 2: дистрибутор
           if (suppLimited && !s.supplierIds.includes(o.distributor.id)) return false
           // Уровень 4: отклонение цены
           if (devPct !== null && o.priceWithVat > avgPrice * (1 + devPct / 100)) return false
@@ -385,20 +385,20 @@ export function AutoSelectModal({ medicines, offers, onClose, onConfirm }: AutoS
                 </div>
               </div>
 
-              {/* Оптовик */}
+              {/* Дистрибутор */}
               <div className="border-b border-gray-200 px-5 py-4">
                 <Label
                   onClear={() => setS(p => ({ ...p, supplierIds: [] }))}
                   hasValue={s.supplierIds.length > 0}
                 >
-                  Оптовик
+                  Дистрибутор
                 </Label>
                 <TagInput
                   options={supplierOptions}
                   selected={s.supplierIds}
                   onAdd={addSupplier}
                   onRemove={removeSupplier}
-                  placeholder="Найти оптовика..."
+                  placeholder="Найти дистрибутора..."
                 />
               </div>
 

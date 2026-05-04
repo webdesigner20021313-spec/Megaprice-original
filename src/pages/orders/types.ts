@@ -4,9 +4,9 @@ export type OrderStatus = 'new' | 'completed' | 'cancelled'
 // ── Per-distributor status inside an order ────────────────────────────────────
 export type DistributorStatus =
   | 'new'          // ещё не отправлен
-  | 'sent'         // отправлен оптовику
+  | 'sent'         // отправлен дистрибутору
   | 'partial_sent' // отправлен частично
-  | 'offer'        // оптовик прислал предложение
+  | 'offer'        // дистрибутор прислал предложение
   | 'accepted'     // клиент принял предложение
   | 'rejected'     // клиент отклонил предложение
   | 'cancelled'    // отменён

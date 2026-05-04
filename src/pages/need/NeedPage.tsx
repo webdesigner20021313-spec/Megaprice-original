@@ -335,7 +335,7 @@ function OffersModal({ item, currentOfferId, onSelectOffer, onClose }: {
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50" style={{ position: 'sticky', top: 0, zIndex: 1 }}>
                   <th className="w-8 px-3 py-2.5" />
-                  {['Оптовик', 'Город', 'Цена с НДС', 'Дата прайса', 'Срок годности', 'Бонус'].map(h => (
+                  {['Дистрибутор', 'Город', 'Цена с НДС', 'Дата прайса', 'Срок годности', 'Бонус'].map(h => (
                     <th key={h} className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-400 whitespace-nowrap">
                       {h}
                     </th>
@@ -360,7 +360,7 @@ function OffersModal({ item, currentOfferId, onSelectOffer, onClose }: {
                           {isSelected && <div className="h-2 w-2 rounded-full bg-gray-900" />}
                         </div>
                       </td>
-                      {/* Оптовик */}
+                      {/* Дистрибутор */}
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-1.5">
                           <span className="text-xs font-semibold text-gray-900">{offer.distributor.name}</span>
@@ -620,7 +620,7 @@ function NeedDrawer({ item, periodDays, selectedPharmacyId, activeOffer, onClose
                 <button
                   onClick={() => onShowOffers(item)}
                   className="mb-3 flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-left text-xs text-gray-500 hover:bg-gray-50 transition-colors">
-                  <span className="shrink-0">{isActuallyBest ? 'Лучшая цена:' : 'Выбранный оптовик:'}</span>
+                  <span className="shrink-0">{isActuallyBest ? 'Лучшая цена:' : 'Выбранный дистрибутор:'}</span>
                   <span className="font-medium text-gray-700">{bestOffer.distributor.name}</span>
                   <span className="text-gray-400">·</span>
                   <span className="text-gray-500">{bestOffer.distributor.city}</span>
@@ -679,10 +679,10 @@ interface BranchData {
 function shortBranch(name: string) { return name.replace(/^Филиал №\d+\s*/, '') }
 
 const BRANCH_NAMES = [
-  'Филиал №1 «Здоровье»',
-  'Филиал №2 «Фармация»',
-  'Филиал №3 «Жизнь»',
-  'Филиал №4 «Мед-Сервис»',
+  'Ул. Навои, 14',
+  'Пр. Мустакиллик, 32',
+  'Ул. Амира Темура, 8',
+  'Ул. Бунёдкор, 21',
 ]
 
 function buildBranchData(item: NeedItem): BranchData[] {
@@ -723,16 +723,9 @@ function buildBranchData(item: NeedItem): BranchData[] {
   return branches
 }
 
-// severity → visual tokens (aligned to style guide status colors)
-const SEV_TOKENS = {
-  red:    { border: '#FCA5A5', badge: 'bg-[#FEE2E2] text-[#991B1B]', icon: 'bg-[#FEE2E2] text-[#991B1B]' },
-  orange: { border: '#FCD34D', badge: 'bg-[#FEF3C7] text-[#92400E]', icon: 'bg-[#FEF3C7] text-[#92400E]' },
-  blue:   { border: '#93C5FD', badge: 'bg-[#DBEAFE] text-[#1E40AF]', icon: 'bg-[#DBEAFE] text-[#1E40AF]' },
-} as const
-
 interface AIRec {
   id:           string
-  severity:     keyof typeof SEV_TOKENS
+  severity:     'red' | 'orange' | 'blue'
   icon:         React.ReactNode
   badgeLabel:   string
   title:        string   // короткое название: "Срок годности истекает"
@@ -772,15 +765,24 @@ function getAIRecommendations(item: NeedItem): AIRec[] {
 
     const minExp = Math.min(...noSalesBranches.map(b => b.expiryDays))
     const analysisParts = noSalesBranches.some(b => b.expiryDays < 90)
-      ? [`${fmt(transferQty)} шт. лежат без движения, а срок годности истекает через ${minExp} дн. Если не перевезти сейчас — весь этот остаток пропадёт.`]
-      : [`${fmt(transferQty)} шт. не приносят выручки — деньги заморожены. Там где товар продаётся, он нужен.`]
+      ? [`${fmt(transferQty)} шт. стоят без продаж, а срок годности через ${minExp} дн. Не перевезти сейчас — товар спишется.`]
+      : [`${fmt(transferQty)} шт. стоят без движения — деньги заморожены. В других точках этот товар уходит хорошо.`]
 
-    const steps = [
-      `Забрать ${fmt(transferQty)} шт. из ${noSalesBranches.map(b => b.name).join(' и ')}`,
-      `Распределить по ~${fmt(perBranch)} шт. в ${safeTargets.map(b => b.name).join(' и ')}`,
-    ]
+    const steps: string[] = []
+    // Откуда забрать — по каждому филиалу отдельно
+    noSalesBranches.forEach(b => {
+      steps.push(`Забрать ${fmt(b.stock)} шт. из ${shortBranch(b.name)}`)
+    })
+    // Куда везти — пропорционально продажам каждого филиала
+    const totalTargetSales = safeTargets.reduce((s, b) => s + b.dailySales, 0)
+    safeTargets.forEach(b => {
+      const portion = totalTargetSales > 0
+        ? Math.round(transferQty * (b.dailySales / totalTargetSales))
+        : perBranch
+      steps.push(`Везти ${fmt(portion)} шт. в ${shortBranch(b.name)}`)
+    })
     if (riskyBranch) {
-      steps.push(`Не отправлять в ${riskyBranch.name} — запас там уже на ${riskyBranch.daysOfCover} дн., не успеют продать`)
+      steps.push(`В ${shortBranch(riskyBranch.name)} не везти — там запас на ${riskyBranch.daysOfCover} дн., не успеют продать`)
     }
 
     recs.push({
@@ -788,7 +790,7 @@ function getAIRecommendations(item: NeedItem): AIRec[] {
       icon: <ArrowRightLeft className="h-4 w-4" />,
       badgeLabel: 'Нет движения',
       title: 'Товар не продаётся',
-      headline: `${fmt(transferQty)} шт. простаивают в ${noSalesBranches.length > 1 ? noSalesBranches.length + ' филиалах' : noSalesBranches[0].name}`,
+      headline: `${fmt(transferQty)} шт. простаивают в ${noSalesBranches.length > 1 ? noSalesBranches.length + ' филиалах' : shortBranch(noSalesBranches[0].name)}`,
       tableHeaders: ['Филиал', 'Продаж/день', 'Остаток'],
       tableRows,
       analysis: analysisParts.join(' '),
@@ -815,20 +817,26 @@ function getAIRecommendations(item: NeedItem): AIRec[] {
     const totalWillExpire = Math.max(0, atRiskQty - totalCanSell)
     let expiryAnalysis: string
     if (totalWillExpire > 0) {
-      expiryAnalysis = `При текущем темпе продаж успеют реализовать ${fmt(totalCanSell)} шт. — ${fmt(totalWillExpire)} шт. просрочатся. Нужно действовать немедленно.`
+      expiryAnalysis = `При текущем темпе продадут ${fmt(totalCanSell)} шт. — остальные ${fmt(totalWillExpire)} шт. уйдут в списание. Действовать нужно сейчас.`
     } else {
-      expiryAnalysis = `Теоретически успеют продать, но запас на пределе — любое замедление спроса и часть товара просрочится.`
+      expiryAnalysis = `Продать должны успеть, но запас на пределе. Если спрос чуть упадёт — часть товара просрочится.`
     }
     const analysisParts = [expiryAnalysis]
 
     const steps: string[] = []
     if (fastBranches.length > 0 && canSellInTime >= atRiskQty * 0.6) {
-      steps.push(`Срочно перевести в ${fastBranches.map(b => b.name).join(' и ')} — там продажи выше`)
+      const totalFastSales = fastBranches.reduce((s, b) => s + b.dailySales, 0)
+      fastBranches.forEach(b => {
+        const canTake = totalFastSales > 0
+          ? Math.round(atRiskQty * (b.dailySales / totalFastSales))
+          : Math.round(atRiskQty / fastBranches.length)
+        steps.push(`Срочно перевезти ${fmt(canTake)} шт. в ${shortBranch(b.name)}`)
+      })
     } else {
-      steps.push(`Предложить ${fmt(Math.round(atRiskQty * 0.5))} шт. оптом другой аптеке`)
-      steps.push(`Запустить акцию −20–25% на оставшийся остаток`)
+      steps.push(`Предложить ~${fmt(Math.round(atRiskQty * 0.5))} шт. оптом соседней аптеке`)
+      steps.push(`Сделать скидку 20–25% — ускорить продажи пока не поздно`)
     }
-    steps.push(`Не заказывать этот товар до продажи текущего запаса`)
+    steps.push(`Новый заказ не делать до полной продажи текущего остатка`)
 
     recs.push({
       id: 'expiry', severity: 'orange',
@@ -857,13 +865,13 @@ function getAIRecommendations(item: NeedItem): AIRec[] {
     )
 
     const analysis = networkDailySales > 0
-      ? `Весь остаток уйдёт за ~${monthsToSell} мес., но срок годности истекает через ${minExpiry} дн.${willExpire > 0 ? ` Около ${fmt(willExpire)} шт. не успеют продаться.` : ''}`
-      : `Продаж нет ни в одном филиале. Весь остаток (${fmt(item.stock)} шт.) просрочится через ${minExpiry} дн.`
+      ? `Весь остаток уйдёт за ~${monthsToSell} мес., а срок истекает через ${minExpiry} дн.${willExpire > 0 ? ` ${fmt(willExpire)} шт. просрочатся.` : ''}`
+      : `Ни в одном филиале продаж нет. Весь остаток — ${fmt(item.stock)} шт. — просрочится через ${minExpiry} дн.`
 
     const steps = [
-      `Продать ${fmt(Math.round(item.stock * 0.4))}–${fmt(Math.round(item.stock * 0.5))} шт. оптом другой аптеке`,
-      `Запустить скидку 15–25% чтобы ускорить продажи`,
-      `Убрать из плана закупок до роста спроса`,
+      `Предложить ${fmt(Math.round(item.stock * 0.4))}–${fmt(Math.round(item.stock * 0.5))} шт. оптом соседней аптеке`,
+      `Сделать скидку 15–25% — нужно ускорить продажи`,
+      `Исключить из плана закупок до роста спроса`,
     ]
 
     recs.push({
@@ -891,22 +899,24 @@ function getAIRecommendations(item: NeedItem): AIRec[] {
     let analysis = ''
     if (item.status === 'oos') {
       analysis = surplus.length > 0
-        ? `Каждый день простоя — ${fmt(item.lostRevenuePerDay)} сум упущенной выручки. В ${surplus.map(b => b.name).join(' и ')} есть излишки — можно перевезти быстро.`
-        : `Каждый день простоя — ${fmt(item.lostRevenuePerDay)} сум упущенной выручки. Свободных запасов в сети нет, нужен срочный заказ.`
+        ? `Каждый день без товара — ${fmt(item.lostRevenuePerDay)} сум потерянной выручки. В ${surplus.map(b => shortBranch(b.name)).join(' и ')} есть свободный запас — можно перевезти.`
+        : `Каждый день без товара — ${fmt(item.lostRevenuePerDay)} сум потерянной выручки. Запасов в других точках нет — нужен срочный заказ.`
     } else {
       analysis = surplus.length > 0
-        ? `Осталось на ${Math.round(item.daysOfCover)} дн. — этого может не хватить. В ${surplus.map(b => b.name).join(' и ')} запас избыточный, оттуда можно перевезти.`
-        : `Осталось на ${Math.round(item.daysOfCover)} дн. — нужно пополнить до того, как закончится.`
+        ? `Запаса хватит на ${Math.round(item.daysOfCover)} дн. — пора пополнять. В ${surplus.map(b => shortBranch(b.name)).join(' и ')} запас с излишком, можно взять оттуда.`
+        : `Запаса хватит на ${Math.round(item.daysOfCover)} дн. Пополнить нужно до того, как закончится.`
     }
 
     const steps: string[] = []
     if (surplus.length > 0) {
-      const transferable = surplus.reduce((s, b) => s + Math.round(b.stock * 0.4), 0)
-      steps.push(`Перевести ~${fmt(transferable)} шт. из ${surplus.map(b => b.name).join(' и ')}`)
+      surplus.forEach(b => {
+        const transferable = Math.round(b.stock * 0.4)
+        steps.push(`Перевезти ${fmt(transferable)} шт. из ${shortBranch(b.name)}`)
+      })
     } else {
       steps.push(`Сделать срочный заказ у поставщика — ${fmt(item.recommendedQty)} шт.`)
     }
-    steps.push(`Поставить в приоритет ближайшей закупки`)
+    steps.push(`Добавить в ближайший заказ поставщику`)
 
     recs.push({
       id: 'oos', severity: 'red',
@@ -926,121 +936,145 @@ function getAIRecommendations(item: NeedItem): AIRec[] {
   return recs
 }
 
+// ── Severity visual tokens ────────────────────────────────────────────────────
+const SEV_STYLE = {
+  red:    { bar: 'bg-red-400',   badge: 'bg-red-50 text-red-500',    metric: 'text-red-500'    },
+  orange: { bar: 'bg-amber-400', badge: 'bg-amber-50 text-amber-600', metric: 'text-amber-600' },
+  blue:   { bar: 'bg-indigo-400',badge: 'bg-indigo-50 text-indigo-600', metric: 'text-indigo-600' },
+} as const
+
 function AIAdviceModal({ item, onClose }: { item: NeedItem; onClose: () => void }) {
   const recs = useMemo(() => getAIRecommendations(item), [item])
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/30" />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
       <div
-        className="relative flex w-full max-w-[480px] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg"
+        className="relative flex w-full max-w-[460px] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
         style={{ maxHeight: '88vh' }}
         onClick={e => e.stopPropagation()}
       >
-        {/* ── Header ─────────────────────────────────────────────────────── */}
-        <div className="shrink-0 border-b border-gray-200 px-5 py-3.5">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-start gap-2.5 min-w-0">
-              <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gray-100">
-                <Sparkles className="h-3.5 w-3.5 text-gray-600" />
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-gray-900">{item.name}</p>
-                <p className="mt-0.5 text-xs text-gray-400">{item.manufacturer} · {item.country}</p>
-              </div>
+        {/* ── Header ── */}
+        <div className="shrink-0 flex items-center justify-between gap-3 px-5 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-900">
+              <Sparkles className="h-3.5 w-3.5 text-white" />
             </div>
-            <button
-              onClick={onClose}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-gray-900 leading-tight">{item.name}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{item.manufacturer} · {item.country}</p>
+            </div>
           </div>
+          <button
+            onClick={onClose}
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
-        {/* ── Рекомендации ───────────────────────────────────────────────── */}
-        <div className="flex-1 overflow-y-auto bg-white">
+        {/* ── Body ── */}
+        <div className="flex-1 overflow-y-auto">
           {recs.length === 0 ? (
-            <div className="flex flex-col items-center py-14 text-center">
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#D1FAE5]">
-                <Check className="h-5 w-5 text-[#065F46]" />
+            <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+              <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-green-50">
+                <Check className="h-5 w-5 text-green-500" />
               </div>
               <p className="text-sm font-semibold text-gray-900">Всё в порядке</p>
-              <p className="mt-1 text-sm text-gray-500">Товар продаётся нормально — плановых закупок достаточно</p>
+              <p className="mt-1 text-xs text-gray-400">Товар продаётся нормально, проблем не обнаружено</p>
             </div>
           ) : (
-            recs.map((rec, recIdx) => {
-              const isLast = recIdx === recs.length - 1
-              return (
-                <div key={rec.id} className={cn(!isLast && 'border-b border-gray-200')}>
+            <div className="divide-y divide-gray-100">
+              {recs.map((rec) => {
+                const sev = SEV_STYLE[rec.severity]
+                return (
+                  <div key={rec.id} className="flex">
 
-                  {/* ① Название */}
-                  <div className="flex items-baseline justify-between gap-3 px-5 pt-4 pb-3">
-                    <p className="text-base font-bold text-gray-900 leading-snug">{rec.title}</p>
-                    <p className="shrink-0 text-xs text-gray-400">{rec.headline}</p>
-                  </div>
+                    {/* Левая полоска — индикатор серьёзности */}
+                    <div className={cn('w-[3px] shrink-0', sev.bar)} />
 
-                  {/* ② Описание проблемы — красный блок */}
-                  {rec.analysis && (
-                    <div className="px-5 pb-3">
-                      <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-3">
-                        <p className="text-sm leading-relaxed text-red-900">{rec.analysis}</p>
-                        {rec.loss && (
-                          <div className="mt-2 flex items-center gap-1.5 border-t border-red-200 pt-2">
-                            <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-red-500" />
-                            <p className="text-xs font-semibold text-red-700">Возможный убыток: {rec.loss}</p>
-                          </div>
-                        )}
+                    {/* Контент карточки */}
+                    <div className="flex-1 min-w-0 px-4 pt-4 pb-5">
+
+                      {/* Строка 1: заголовок слева, бейдж + метрика справа */}
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <p className="text-[18px] font-bold text-gray-900 leading-snug">
+                          {rec.title}
+                        </p>
+                        <div className="flex shrink-0 flex-col items-end gap-0.5">
+                          <span className={cn(
+                            'inline-flex h-6 items-center gap-1.5 rounded-full px-3 text-[11px] font-medium leading-none',
+                            sev.badge
+                          )}>
+                            {rec.icon}
+                            {rec.badgeLabel}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  )}
 
-                  {/* ③ Таблица по филиалам */}
-                  {rec.tableRows && rec.tableRows.length > 0 && (
-                    <div className="px-5 pb-3">
-                      <div className="overflow-hidden rounded-lg border border-gray-200">
-                        {rec.tableHeaders && (
-                          <div className="grid grid-cols-3 border-b border-gray-200 bg-gray-50 px-3 py-2">
-                            {rec.tableHeaders.map((h, hi) => (
-                              <p key={hi} className={cn('text-xs font-semibold uppercase text-gray-400', hi > 0 && 'text-right')}>{h}</p>
-                            ))}
-                          </div>
-                        )}
-                        {rec.tableRows.map((row, ri) => (
-                          <div key={ri} className={cn('grid grid-cols-3 px-3 py-2.5', ri < rec.tableRows!.length - 1 && 'border-b border-gray-100')}>
-                            <p className="truncate text-sm text-gray-700">{row[0]}</p>
-                            <p className="text-right text-sm text-gray-500">{row[1]}</p>
-                            <p className="text-right text-sm font-semibold text-gray-900">{row[2]}</p>
-                          </div>
-                        ))}
+                      {/* Строка 3: анализ — чистый текст, без блоков */}
+                      {rec.analysis && (
+                        <p className="text-sm text-gray-500 leading-relaxed mb-3">
+                          {rec.analysis}
+                          {rec.loss && (
+                            <> <span className="text-red-500">Потери: {rec.loss}.</span></>
+                          )}
+                        </p>
+                      )}
+
+                      {/* Строка 4: таблица — inline, без жирных рамок */}
+                      {rec.tableRows && rec.tableRows.length > 0 && (
+                        <div className="mb-4 overflow-hidden rounded-lg border border-gray-100">
+                          {rec.tableHeaders && (
+                            <div className="grid grid-cols-3 bg-gray-50 px-3 py-1.5 border-b border-gray-100">
+                              {rec.tableHeaders.map((h, hi) => (
+                                <p key={hi} className={cn(
+                                  'text-[10px] font-semibold uppercase tracking-wide text-gray-400',
+                                  hi > 0 ? 'text-right' : 'text-left'
+                                )}>{h}</p>
+                              ))}
+                            </div>
+                          )}
+                          {rec.tableRows.map((row, ri) => (
+                            <div key={ri} className={cn(
+                              'grid grid-cols-3 px-3 py-2 bg-white',
+                              ri < rec.tableRows!.length - 1 && 'border-b border-gray-100'
+                            )}>
+                              <p className="truncate text-xs font-medium text-gray-700">{row[0]}</p>
+                              <p className="text-right text-xs text-gray-500">{row[1]}</p>
+                              <p className="text-right text-xs font-semibold text-gray-900">{row[2]}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Строка 5: шаги — чистый список без зелёного блока */}
+                      <div className="border-t border-dashed border-gray-200 pt-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-900 mb-2.5">
+                          Что сделать
+                        </p>
+                        <ul className="space-y-2">
+                          {rec.steps.map((step, si) => (
+                            <li key={si} className="flex items-start gap-2.5">
+                              <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-green-500 text-[9px] font-bold leading-none text-white">
+                                {si + 1}
+                              </span>
+                              <span className="text-sm text-gray-700 leading-snug">{step}</span>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                    </div>
-                  )}
 
-                  {/* ④ Решения */}
-                  <div className="px-5 pb-5">
-                    <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-3">
-                      <ul className="space-y-2">
-                        {rec.steps.map((step, si) => (
-                          <li key={si} className="flex items-start gap-2.5">
-                            <span className="mt-px flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-green-600 text-[10px] font-bold leading-none text-white">
-                              {si + 1}
-                            </span>
-                            <span className="text-sm leading-snug text-green-900">{step}</span>
-                          </li>
-                        ))}
-                      </ul>
                     </div>
                   </div>
-
-                </div>
-              )
-            })
+                )
+              })}
+            </div>
           )}
         </div>
 
-        {/* ── Footer ─────────────────────────────────────────────────────── */}
-        <div className="shrink-0 border-t border-gray-200 bg-white px-5 py-3">
+        {/* ── Footer ── */}
+        <div className="shrink-0 border-t border-gray-100 bg-white px-5 py-3">
           <button
             onClick={onClose}
             className="h-10 w-full rounded-lg bg-gray-900 text-sm font-semibold text-white transition-all duration-200 hover:bg-black"
@@ -1338,8 +1372,8 @@ export function NeedPage() {
         'Продажи/день':       item.avgDailySales,
         'Нужно заказать':     calcRecommendedQty(item, periodDays),
         'Лучшая цена (UZS)':  bestOffer?.priceWithVat ?? '',
-        'Оптовик':            bestOffer?.distributor.name ?? '',
-        'Город оптовика':     bestOffer?.distributor.city ?? '',
+        'Дистрибутор':        bestOffer?.distributor.name ?? '',
+        'Город дистрибутора': bestOffer?.distributor.city ?? '',
       }
     })
     const ws = XLSX.utils.json_to_sheet(rows)

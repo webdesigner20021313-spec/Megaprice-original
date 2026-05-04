@@ -66,7 +66,7 @@ export const MODULES_CONFIG: ModuleConfig[] = [
       { id: 'manual',      label: 'Вручную'  },
       { id: 'post',        label: 'Post'      },
       { id: 'excel',       label: 'Excel'     },
-      { id: 'wholesalers', label: 'Оптовики' },
+      { id: 'wholesalers', label: 'Дистрибуторы' },
     ],
   },
   {
@@ -102,7 +102,7 @@ export const MODULES_CONFIG: ModuleConfig[] = [
     ],
     features: [
       { id: 'download_all',     label: 'Скачать заказы (общие)'      },
-      { id: 'download_vendor',  label: 'Скачать заказы по оптовикам' },
+      { id: 'download_vendor',  label: 'Скачать заказы по дистрибуторам' },
       { id: 'download_invoice', label: 'Скачать invoice'             },
     ],
   },

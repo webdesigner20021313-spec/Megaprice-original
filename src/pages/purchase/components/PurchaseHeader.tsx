@@ -13,9 +13,9 @@ showFavorites: boolean
 
 const tabs: { key: PurchaseTab; label: string }[] = [
   { key: 'manual',      label: 'Вручную'  },
-  { key: 'post',        label: 'Post'     },
+  { key: 'post',        label: 'Pos'      },
   { key: 'excel',       label: 'Excel'    },
-  { key: 'wholesalers', label: 'Оптовики' },
+  { key: 'wholesalers', label: 'Дистрибуторы' },
 ]
 
 export function PurchaseHeader({

@@ -4,7 +4,7 @@ import { Search, Package, Download, Calendar, AlertCircle, ChevronDown } from 'l
 import * as XLSX from 'xlsx'
 import { cn } from '@/lib/utils'
 import { formatCurrency, formatDate } from '@/lib/format'
-import { mockOrders } from '@/mocks/orders.mocks'
+import { useOrdersStore } from '@/stores/useOrdersStore'
 import {
   ORDER_STATUS_CONFIG,
   type OrderStatus,
@@ -43,13 +43,13 @@ function EmptyState({ hasFilters }: { hasFilters: boolean }) {
 
 // ─── Export helper ────────────────────────────────────────────────────────────
 
-function exportToExcel(orders: typeof mockOrders) {
+function exportToExcel(orders: import('@/pages/orders/types').Order[]) {
   const rows = orders.map((o, i) => ({
     '№':        i + 1,
     'Номер':    o.number,
     'Аптека':   o.pharmacyName,
     'Город':    o.pharmacyCity,
-    'Оптовики': o.groups.map(g => g.distributorName).join(', '),
+    'Дистрибуторы': o.groups.map(g => g.distributorName).join(', '),
     'Позиций':  o.groups.reduce((s, g) => s + g.items.length, 0),
     'Кол-во':   o.totalQty,
     'Сумма':    o.totalSum,
@@ -65,7 +65,8 @@ function exportToExcel(orders: typeof mockOrders) {
 // ─── OrderHistoryPage ─────────────────────────────────────────────────────────
 
 export function OrderHistoryPage() {
-  const navigate = useNavigate()
+  const navigate   = useNavigate()
+  const orders     = useOrdersStore(s => s.orders)
   const [search,       setSearch]       = useState('')
   const [dateRange,    setDateRange]    = useState('')
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all')
@@ -75,7 +76,7 @@ export function OrderHistoryPage() {
   const dateTo   = dateRange.split(' - ')[1]?.trim() ?? ''
 
   const filteredOrders = useMemo(() => {
-    return mockOrders
+    return orders
       .filter(o => {
         if (search.trim()) {
           const q = search.toLowerCase()
@@ -114,7 +115,7 @@ export function OrderHistoryPage() {
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Номер, аптека, оптовик..."
+                placeholder="Номер, аптека, дистрибутор..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className="h-9 w-full rounded-lg border border-gray-200 bg-white pl-9 pr-3 text-sm placeholder-gray-400 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
@@ -183,7 +184,7 @@ export function OrderHistoryPage() {
                   <th className="w-8 px-2 py-2.5 text-center text-xs font-semibold uppercase text-gray-400">#</th>
                   <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase text-gray-500">Номер</th>
                   <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase text-gray-500" style={{ minWidth: 160 }}>Аптека</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase text-gray-500" style={{ minWidth: 160 }}>Оптовик</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase text-gray-500" style={{ minWidth: 160 }}>Дистрибутор</th>
                   <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase text-gray-500">Поз.</th>
                   <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase text-gray-500">Кол-во</th>
                   <th className="px-3 py-2.5 text-right text-xs font-semibold uppercase text-gray-500">Сумма</th>
@@ -231,7 +232,7 @@ export function OrderHistoryPage() {
                           </>
                         ) : (
                           <>
-                            <p className="text-sm font-medium text-gray-700">{order.groups.length} оптовика</p>
+                            <p className="text-sm font-medium text-gray-700">{order.groups.length} дистрибутора</p>
                             <p className="truncate text-xs text-gray-400" style={{ maxWidth: 180 }}>
                               {order.groups.map(g => g.distributorName).join(', ')}
                             </p>
@@ -254,7 +255,7 @@ export function OrderHistoryPage() {
                         <div className="flex items-center gap-1.5">
                           <StatusBadge status={order.status} />
                           {hasProposal && (
-                            <span title="Есть предложение от оптовика">
+                            <span title="Есть предложение от дистрибутора">
                               <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
                             </span>
                           )}
@@ -270,7 +271,7 @@ export function OrderHistoryPage() {
               <p className="text-xs text-gray-400">
                 {checked.length > 0
                   ? `Выбрано ${checked.length} из ${filteredOrders.length}`
-                  : `Показано ${filteredOrders.length} из ${mockOrders.length} заказов`}
+                  : `Показано ${filteredOrders.length} из ${orders.length} заказов`}
               </p>
             </div>
           </div>

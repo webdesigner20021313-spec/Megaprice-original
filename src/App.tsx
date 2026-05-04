@@ -16,6 +16,7 @@ import { StatisticsPage } from '@/pages/analytics/StatisticsPage'
 import { SettingsPage } from '@/pages/settings/SettingsPage'
 import { CartPage } from '@/pages/cart/CartPage'
 import { NeedPage } from '@/pages/need/NeedPage'
+import { WholesalersPage } from '@/pages/wholesalers/WholesalersPage'
 import { UsersPage } from '@/pages/users/UsersPage'
 import { RoleCreatePage } from '@/pages/users/RoleCreatePage'
 import { RoleEditPage } from '@/pages/users/RoleEditPage'
@@ -56,6 +57,7 @@ function App() {
         </Route>
         <Route path="cart" element={<CartPage />} />
         <Route path="need" element={<NeedPage />} />
+        <Route path="wholesalers" element={<WholesalersPage />} />
         <Route path="users" element={<UsersPage />} />
         <Route path="users/roles/create" element={<RoleCreatePage />} />
         <Route path="users/roles/:id/edit" element={<RoleEditPage />} />

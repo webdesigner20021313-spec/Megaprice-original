@@ -20,7 +20,7 @@ export const mockNotifications: Notification[] = [
   {
     id: 'n-3',
     title: 'Заказ подтверждён',
-    message: 'Заказ ORD-2026-0019 подтверждён оптовиком «МедСнаб»',
+    message: 'Заказ ORD-2026-0019 подтверждён дистрибутором «МедСнаб»',
     type: 'success',
     read: false,
     createdAt: '2026-04-11T16:45:00',
@@ -43,8 +43,8 @@ export const mockNotifications: Notification[] = [
   },
   {
     id: 'n-6',
-    title: 'Новый оптовик',
-    message: 'Оптовик «ТашФарм» добавлен в систему с 45 позициями',
+    title: 'Новый дистрибутор',
+    message: 'Дистрибутор «ТашФарм» добавлен в систему с 45 позициями',
     type: 'info',
     read: true,
     createdAt: '2026-04-10T09:15:00',

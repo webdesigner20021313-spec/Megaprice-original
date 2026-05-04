@@ -17,10 +17,10 @@ export const mockOrders: Order[] = [
     groups: [
       {
         distributorId: 'ds1',
-        distributorName: 'Farmservis',
+        distributorName: 'Katren',
         distributorCity: 'Ташкент',
         contactType: 'telegram',
-        contact: '@farmservis_bot',
+        contact: '@katren_uz',
         distributorStatus: 'new',
         subtotal: 1_098_000,
         items: [
@@ -44,10 +44,10 @@ export const mockOrders: Order[] = [
     groups: [
       {
         distributorId: 'ds2',
-        distributorName: 'Tajmed',
+        distributorName: 'Protek',
         distributorCity: 'Ташкент',
         contactType: 'telegram',
-        contact: '@tajmed_zakaz',
+        contact: '@protek_uz',
         distributorStatus: 'new',
         subtotal: 1_350_000,
         items: [
@@ -57,10 +57,10 @@ export const mockOrders: Order[] = [
       },
       {
         distributorId: 'ds5',
-        distributorName: 'Dori-Darmon',
-        distributorCity: 'Самарканд',
-        contactType: 'email',
-        contact: 'order@doridarmon.uz',
+        distributorName: 'Arnika',
+        distributorCity: 'Ташкент',
+        contactType: 'telegram',
+        contact: '@arnika_tash',
         distributorStatus: 'new',
         subtotal: 815_000,
         items: [
@@ -86,10 +86,10 @@ export const mockOrders: Order[] = [
     groups: [
       {
         distributorId: 'ds1',
-        distributorName: 'Farmservis',
+        distributorName: 'Katren',
         distributorCity: 'Ташкент',
         contactType: 'telegram',
-        contact: '@farmservis_bot',
+        contact: '@katren_uz',
         distributorStatus: 'sent',
         sentAt: '2026-04-29T12:00:00',
         subtotal: 1_575_000,
@@ -100,10 +100,10 @@ export const mockOrders: Order[] = [
       },
       {
         distributorId: 'ds3',
-        distributorName: 'Alfa Pharma',
-        distributorCity: 'Самарканд',
+        distributorName: 'BioFarm',
+        distributorCity: 'Ташкент',
         contactType: 'email',
-        contact: 'info@alfapharma.uz',
+        contact: 'bio@biofarm.uz',
         distributorStatus: 'offer',
         sentAt: '2026-04-29T14:30:00',
         subtotal: 862_000,
@@ -135,10 +135,10 @@ export const mockOrders: Order[] = [
     groups: [
       {
         distributorId: 'ds2',
-        distributorName: 'Tajmed',
+        distributorName: 'Protek',
         distributorCity: 'Ташкент',
         contactType: 'telegram',
-        contact: '@tajmed_zakaz',
+        contact: '@protek_uz',
         distributorStatus: 'sent',
         sentAt: '2026-04-28T15:00:00',
         subtotal: 1_600_000,
@@ -148,10 +148,10 @@ export const mockOrders: Order[] = [
       },
       {
         distributorId: 'ds4',
-        distributorName: 'Ташфарм',
-        distributorCity: 'Бухара',
+        distributorName: 'MedOpt',
+        distributorCity: 'Нукус',
         contactType: 'telegram',
-        contact: '@tashfarm_orders',
+        contact: '@medopt_nukus',
         distributorStatus: 'sent',
         sentAt: '2026-04-28T15:30:00',
         subtotal: 875_000,
@@ -161,10 +161,10 @@ export const mockOrders: Order[] = [
       },
       {
         distributorId: 'ds5',
-        distributorName: 'Dori-Darmon',
-        distributorCity: 'Самарканд',
-        contactType: 'email',
-        contact: 'order@doridarmon.uz',
+        distributorName: 'Arnika',
+        distributorCity: 'Ташкент',
+        contactType: 'telegram',
+        contact: '@arnika_tash',
         distributorStatus: 'new',
         subtotal: 805_000,
         items: [
@@ -190,10 +190,10 @@ export const mockOrders: Order[] = [
     groups: [
       {
         distributorId: 'ds1',
-        distributorName: 'Farmservis',
+        distributorName: 'Katren',
         distributorCity: 'Ташкент',
         contactType: 'telegram',
-        contact: '@farmservis_bot',
+        contact: '@katren_uz',
         distributorStatus: 'sent',
         sentAt: '2026-04-20T10:00:00',
         subtotal: 820_000,
@@ -204,10 +204,10 @@ export const mockOrders: Order[] = [
       },
       {
         distributorId: 'ds2',
-        distributorName: 'Tajmed',
+        distributorName: 'Protek',
         distributorCity: 'Ташкент',
         contactType: 'telegram',
-        contact: '@tajmed_zakaz',
+        contact: '@protek_uz',
         distributorStatus: 'offer',
         sentAt: '2026-04-20T10:15:00',
         subtotal: 375_000,
@@ -244,10 +244,10 @@ export const mockOrders: Order[] = [
     groups: [
       {
         distributorId: 'ds2',
-        distributorName: 'Tajmed',
+        distributorName: 'Protek',
         distributorCity: 'Ташкент',
         contactType: 'telegram',
-        contact: '@tajmed_zakaz',
+        contact: '@protek_uz',
         distributorStatus: 'sent',
         sentAt: '2026-04-20T12:00:00',
         subtotal: 884_000,
@@ -273,10 +273,10 @@ export const mockOrders: Order[] = [
     groups: [
       {
         distributorId: 'ds5',
-        distributorName: 'Dori-Darmon',
-        distributorCity: 'Самарканд',
-        contactType: 'email',
-        contact: 'order@doridarmon.uz',
+        distributorName: 'Arnika',
+        distributorCity: 'Ташкент',
+        contactType: 'telegram',
+        contact: '@arnika_tash',
         distributorStatus: 'sent',
         sentAt: '2026-04-19T15:30:00',
         subtotal: 472_000,
@@ -301,10 +301,10 @@ export const mockOrders: Order[] = [
     groups: [
       {
         distributorId: 'ds1',
-        distributorName: 'Farmservis',
+        distributorName: 'Katren',
         distributorCity: 'Ташкент',
         contactType: 'telegram',
-        contact: '@farmservis_bot',
+        contact: '@katren_uz',
         distributorStatus: 'sent',
         sentAt: '2026-04-18T11:00:00',
         subtotal: 1_405_000,
@@ -330,10 +330,10 @@ export const mockOrders: Order[] = [
     groups: [
       {
         distributorId: 'ds2',
-        distributorName: 'Tajmed',
+        distributorName: 'Protek',
         distributorCity: 'Ташкент',
         contactType: 'telegram',
-        contact: '@tajmed_zakaz',
+        contact: '@protek_uz',
         distributorStatus: 'sent',
         sentAt: '2026-04-17T17:30:00',
         subtotal: 818_500,
@@ -358,10 +358,10 @@ export const mockOrders: Order[] = [
     groups: [
       {
         distributorId: 'ds1',
-        distributorName: 'Farmservis',
+        distributorName: 'Katren',
         distributorCity: 'Ташкент',
         contactType: 'telegram',
-        contact: '@farmservis_bot',
+        contact: '@katren_uz',
         distributorStatus: 'sent',
         sentAt: '2026-04-16T09:00:00',
         subtotal: 855_000,
@@ -372,10 +372,10 @@ export const mockOrders: Order[] = [
       },
       {
         distributorId: 'ds5',
-        distributorName: 'Dori-Darmon',
-        distributorCity: 'Самарканд',
-        contactType: 'email',
-        contact: 'order@doridarmon.uz',
+        distributorName: 'Arnika',
+        distributorCity: 'Ташкент',
+        contactType: 'telegram',
+        contact: '@arnika_tash',
         distributorStatus: 'sent',
         sentAt: '2026-04-16T09:15:00',
         subtotal: 512_000,
@@ -400,10 +400,10 @@ export const mockOrders: Order[] = [
     groups: [
       {
         distributorId: 'ds4',
-        distributorName: 'Ташфарм',
-        distributorCity: 'Бухара',
+        distributorName: 'MedOpt',
+        distributorCity: 'Нукус',
         contactType: 'telegram',
-        contact: '@tashfarm_orders',
+        contact: '@medopt_nukus',
         distributorStatus: 'sent',
         sentAt: '2026-04-15T14:00:00',
         subtotal: 1_950_000,
@@ -428,10 +428,10 @@ export const mockOrders: Order[] = [
     groups: [
       {
         distributorId: 'ds5',
-        distributorName: 'Dori-Darmon',
-        distributorCity: 'Самарканд',
-        contactType: 'email',
-        contact: 'order@doridarmon.uz',
+        distributorName: 'Arnika',
+        distributorCity: 'Ташкент',
+        contactType: 'telegram',
+        contact: '@arnika_tash',
         distributorStatus: 'sent',
         sentAt: '2026-04-14T12:00:00',
         subtotal: 950_000,
@@ -457,10 +457,10 @@ export const mockOrders: Order[] = [
     groups: [
       {
         distributorId: 'ds2',
-        distributorName: 'Tajmed',
+        distributorName: 'Protek',
         distributorCity: 'Ташкент',
         contactType: 'telegram',
-        contact: '@tajmed_zakaz',
+        contact: '@protek_uz',
         distributorStatus: 'sent',
         sentAt: '2026-04-13T10:00:00',
         subtotal: 1_710_000,
@@ -485,10 +485,10 @@ export const mockOrders: Order[] = [
     groups: [
       {
         distributorId: 'ds1',
-        distributorName: 'Farmservis',
+        distributorName: 'Katren',
         distributorCity: 'Ташкент',
         contactType: 'telegram',
-        contact: '@farmservis_bot',
+        contact: '@katren_uz',
         distributorStatus: 'sent',
         sentAt: '2026-04-12T16:00:00',
         subtotal: 1_263_000,
@@ -514,10 +514,10 @@ export const mockOrders: Order[] = [
     groups: [
       {
         distributorId: 'ds4',
-        distributorName: 'Ташфарм',
-        distributorCity: 'Бухара',
+        distributorName: 'MedOpt',
+        distributorCity: 'Нукус',
         contactType: 'telegram',
-        contact: '@tashfarm_orders',
+        contact: '@medopt_nukus',
         distributorStatus: 'sent',
         sentAt: '2026-04-10T11:00:00',
         subtotal: 2_500_000,
@@ -527,10 +527,10 @@ export const mockOrders: Order[] = [
       },
       {
         distributorId: 'ds1',
-        distributorName: 'Farmservis',
+        distributorName: 'Katren',
         distributorCity: 'Ташкент',
         contactType: 'telegram',
-        contact: '@farmservis_bot',
+        contact: '@katren_uz',
         distributorStatus: 'sent',
         sentAt: '2026-04-10T11:00:00',
         subtotal: 1_900_000,
@@ -554,10 +554,10 @@ export const mockOrders: Order[] = [
     groups: [
       {
         distributorId: 'ds1',
-        distributorName: 'Farmservis',
+        distributorName: 'Katren',
         distributorCity: 'Ташкент',
         contactType: 'telegram',
-        contact: '@farmservis_bot',
+        contact: '@katren_uz',
         distributorStatus: 'sent',
         sentAt: '2026-04-08T15:00:00',
         subtotal: 2_060_000,
@@ -582,10 +582,10 @@ export const mockOrders: Order[] = [
     groups: [
       {
         distributorId: 'ds5',
-        distributorName: 'Dori-Darmon',
-        distributorCity: 'Самарканд',
-        contactType: 'email',
-        contact: 'order@doridarmon.uz',
+        distributorName: 'Arnika',
+        distributorCity: 'Ташкент',
+        contactType: 'telegram',
+        contact: '@arnika_tash',
         distributorStatus: 'sent',
         sentAt: '2026-04-05T10:30:00',
         subtotal: 1_257_000,
@@ -611,10 +611,10 @@ export const mockOrders: Order[] = [
     groups: [
       {
         distributorId: 'ds2',
-        distributorName: 'Tajmed',
+        distributorName: 'Protek',
         distributorCity: 'Ташкент',
         contactType: 'telegram',
-        contact: '@tajmed_zakaz',
+        contact: '@protek_uz',
         distributorStatus: 'sent',
         sentAt: '2026-04-03T13:00:00',
         subtotal: 550_000,
@@ -641,10 +641,10 @@ export const mockOrders: Order[] = [
     groups: [
       {
         distributorId: 'ds3',
-        distributorName: 'Alfa Pharma',
-        distributorCity: 'Самарканд',
+        distributorName: 'BioFarm',
+        distributorCity: 'Ташкент',
         contactType: 'email',
-        contact: 'info@alfapharma.uz',
+        contact: 'bio@biofarm.uz',
         distributorStatus: 'cancelled',
         subtotal: 760_000,
         items: [
@@ -668,10 +668,10 @@ export const mockOrders: Order[] = [
     groups: [
       {
         distributorId: 'ds2',
-        distributorName: 'Tajmed',
+        distributorName: 'Protek',
         distributorCity: 'Ташкент',
         contactType: 'telegram',
-        contact: '@tajmed_zakaz',
+        contact: '@protek_uz',
         distributorStatus: 'cancelled',
         subtotal: 640_000,
         items: [
@@ -681,10 +681,10 @@ export const mockOrders: Order[] = [
       },
       {
         distributorId: 'ds4',
-        distributorName: 'Ташфарм',
-        distributorCity: 'Бухара',
+        distributorName: 'MedOpt',
+        distributorCity: 'Нукус',
         contactType: 'telegram',
-        contact: '@tashfarm_orders',
+        contact: '@medopt_nukus',
         distributorStatus: 'cancelled',
         subtotal: 410_000,
         items: [

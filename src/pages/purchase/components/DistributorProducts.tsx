@@ -510,7 +510,7 @@ export function DistributorProducts({ distributor }: DistributorProductsProps) {
           <Package className="h-10 w-10 text-gray-400" />
         </div>
         <div>
-          <p className="text-base font-medium text-gray-700">Выберите оптовика</p>
+          <p className="text-base font-medium text-gray-700">Выберите дистрибутора</p>
           <p className="mt-1 text-sm text-gray-400">из списка слева</p>
         </div>
       </div>

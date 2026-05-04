@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils'
 import { formatCurrency, formatDate } from '@/lib/format'
 import { QuantityControl } from './QuantityControl'
+import { useWholesalersStore } from '@/stores/useWholesalersStore'
 import type { SupplierOffer, BonusType, PaymentOption, ColumnKey } from '@/pages/purchase/types/purchase.types'
 import type { Col2Widths, ReorderColKey } from './SupplierTable'
 
@@ -59,11 +60,15 @@ const cellDiv = (extra?: React.CSSProperties): React.CSSProperties => ({
 
 export function SupplierRow({ offer, index, avgPrice, quantity, onQuantityChange, visibleColumns, colOrder }: SupplierRowProps) {
   const col = visibleColumns
-  const expiryLabel = getExpiryLabel(offer.expiryDate)
-  const priceCompare = getPriceCompare(offer.priceWithVat, avgPrice)
-  const discountPct = offer.originalPrice
-    ? Math.round((1 - offer.priceWithVat / offer.originalPrice) * 100)
-    : null
+  const myDiscount   = useWholesalersStore(s => s.getDiscount(offer.distributor.name))
+  const effectivePrice = myDiscount ? Math.round(offer.priceWithVat * (1 - myDiscount / 100)) : offer.priceWithVat
+  const expiryLabel  = getExpiryLabel(offer.expiryDate)
+  const priceCompare = getPriceCompare(effectivePrice, avgPrice)
+  const discountPct  = myDiscount
+    ? myDiscount
+    : offer.originalPrice
+      ? Math.round((1 - offer.priceWithVat / offer.originalPrice) * 100)
+      : null
 
   function renderCell(key: ReorderColKey) {
     switch (key) {
@@ -101,14 +106,16 @@ export function SupplierRow({ offer, index, avgPrice, quantity, onQuantityChange
         return !col.price ? null : (
           <td key="price" style={tdBase}>
             <div style={cellDiv({ alignItems: 'flex-end' })}>
-              <span className="text-sm font-semibold text-gray-900">{formatCurrency(offer.priceWithVat)}</span>
-              {offer.originalPrice && discountPct && (
+              <span className="text-sm font-semibold text-gray-900">{formatCurrency(effectivePrice)}</span>
+              {discountPct && (
                 <div className="flex items-center gap-1">
-                  <span className="text-xs text-gray-400 line-through">{formatCurrency(offer.originalPrice)}</span>
+                  <span className="text-xs text-gray-400 line-through">
+                    {formatCurrency(myDiscount ? offer.priceWithVat : offer.originalPrice!)}
+                  </span>
                   <span className="text-xs font-medium text-red-500">-{discountPct}%</span>
                 </div>
               )}
-              {!offer.originalPrice && priceCompare && (
+              {!discountPct && priceCompare && (
                 <p className={cn('text-xs', priceCompare.positive ? 'text-green-600' : 'text-red-500')}>
                   {priceCompare.text}
                 </p>
@@ -119,12 +126,18 @@ export function SupplierRow({ offer, index, avgPrice, quantity, onQuantityChange
       case 'bonus':
         return !col.bonus ? null : (
           <td key="bonus" style={tdBase}>
-            <div style={cellDiv({ justifyContent: 'center', alignItems: 'center' })}>
-              {offer.bonus ? (
-                <span className={cn('inline-flex items-center rounded-full px-4 py-1 text-xs font-medium', bonusStyles[offer.bonus.type])}>
+            <div style={cellDiv({ justifyContent: 'center', alignItems: 'center', gap: 4 })}>
+              {myDiscount && (
+                <span className="inline-flex items-center rounded-full bg-[#EDE9FE] px-3 py-0.5 text-xs font-medium text-[#5B21B6]">
+                  Спец. предложение
+                </span>
+              )}
+              {offer.bonus && (
+                <span className={cn('inline-flex items-center rounded-full px-3 py-0.5 text-xs font-medium', bonusStyles[offer.bonus.type])}>
                   {offer.bonus.label}
                 </span>
-              ) : (
+              )}
+              {!myDiscount && !offer.bonus && (
                 <span className="text-xs text-gray-300">—</span>
               )}
             </div>

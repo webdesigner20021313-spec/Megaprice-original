@@ -43,21 +43,16 @@ export const mockMedicines: Medicine[] = [
 ]
 
 export const mockDistributors = [
-  { id: 'd1',  name: 'MEDSERVICE',      city: 'Алматы',    lastPriceDate: '2026-04-18', contactType: 'telegram' as const, contact: '@medservice_orders'    },
-  { id: 'd2',  name: 'PHARMEX',         city: 'Астана',    lastPriceDate: '2026-04-17', contactType: 'email'    as const, contact: 'orders@pharmex.uz'      },
-  { id: 'd3',  name: 'TURON PHARM',     city: 'Ташкент',   lastPriceDate: '2026-04-19', contactType: 'telegram' as const, contact: '@turonpharm_bot'        },
-  { id: 'd4',  name: 'MEGA PHARM',      city: 'Ташкент',   lastPriceDate: '2026-04-15', contactType: 'telegram' as const, contact: '@megapharm_orders'      },
-  { id: 'd5',  name: 'DOSTLIK FARM',    city: 'Бухара',    lastPriceDate: '2026-04-10', contactType: 'email'    as const, contact: 'zakaz@dostlikfarm.uz'   },
-  { id: 'd6',  name: 'BIOMED',          city: 'Алматы',    lastPriceDate: '2026-04-14', contactType: 'telegram' as const, contact: '@biomed_almaty'         },
-  { id: 'd7',  name: 'ALFA PHARMA',     city: 'Самарканд', lastPriceDate: '2026-04-16', contactType: 'email'    as const, contact: 'info@alfapharma.uz'     },
-  { id: 'd8',  name: 'CENTRAL PHARM',   city: 'Астана',    lastPriceDate: '2026-04-20', contactType: 'telegram' as const, contact: '@centralpharm_bot'      },
-  { id: 'd9',  name: 'ORIENT MED',      city: 'Наманган',  lastPriceDate: '2026-04-12', contactType: 'email'    as const, contact: 'orders@orientmed.uz'    },
-  { id: 'd10', name: 'VITA PLUS',       city: 'Ташкент',   lastPriceDate: '2026-04-18', contactType: 'telegram' as const, contact: '@vitaplus_orders'       },
-  { id: 'd11', name: 'FARMAKON',        city: 'Алматы',    lastPriceDate: '2026-04-11', contactType: 'email'    as const, contact: 'supply@farmakon.kz'     },
-  { id: 'd12', name: 'PROMEDICA',       city: 'Фергана',   lastPriceDate: '2026-04-09', contactType: 'telegram' as const, contact: '@promedica_fargona'     },
-  { id: 'd13', name: 'SILK ROAD PHARM', city: 'Самарканд', lastPriceDate: '2026-04-13', contactType: 'email'    as const, contact: 'orders@silkroadpharm.uz'},
-  { id: 'd14', name: 'HEALTH LINE',     city: 'Астана',    lastPriceDate: '2026-04-07', contactType: 'telegram' as const, contact: '@healthline_bot'        },
-  { id: 'd15', name: 'UZPHARM',         city: 'Ташкент',   lastPriceDate: '2026-04-20', contactType: 'email'    as const, contact: 'zakaz@uzpharm.uz'       },
+  { id: 'd1',  name: 'Katren',      city: 'Ташкент',   lastPriceDate: '2026-04-18', contactType: 'telegram' as const, contact: '@katren_uz'       },
+  { id: 'd2',  name: 'Protek',      city: 'Ташкент',   lastPriceDate: '2026-04-20', contactType: 'telegram' as const, contact: '@protek_uz'       },
+  { id: 'd3',  name: 'UzbekFarm',   city: 'Самарканд', lastPriceDate: '2026-04-17', contactType: 'email'    as const, contact: 'uzb@pharmopt.uz'  },
+  { id: 'd4',  name: 'Arnika',      city: 'Ташкент',   lastPriceDate: '2026-04-19', contactType: 'telegram' as const, contact: '@arnika_tash'     },
+  { id: 'd5',  name: 'BioFarm',     city: 'Ташкент',   lastPriceDate: '2026-04-16', contactType: 'email'    as const, contact: 'bio@biofarm.uz'   },
+  { id: 'd6',  name: 'MedOpt',      city: 'Нукус',     lastPriceDate: '2026-04-14', contactType: 'telegram' as const, contact: '@medopt_nukus'    },
+  { id: 'd7',  name: 'Dori-Darmon', city: 'Ташкент',   lastPriceDate: '2026-04-19', contactType: 'telegram' as const, contact: '@doridarmon_uz'   },
+  { id: 'd8',  name: 'Farmservis',  city: 'Ташкент',   lastPriceDate: '2026-04-18', contactType: 'telegram' as const, contact: '@farmservis_bot'  },
+  { id: 'd9',  name: 'Tajmed',      city: 'Душанбе',   lastPriceDate: '2026-04-15', contactType: 'telegram' as const, contact: '@tajmed_orders'   },
+  { id: 'd10', name: 'Alfa Pharma', city: 'Самарканд', lastPriceDate: '2026-04-13', contactType: 'email'    as const, contact: 'info@alfapharma.uz'},
 ]
 
 const distributors = mockDistributors
@@ -76,22 +71,22 @@ export const mockSupplierOffers: SupplierOffer[] = [
   { id: 'o2',  medicineId: 'm1', distributor: distributors[1], expiryDate: '2025-12-20', paymentTypes: [p50d14, p30d30],       priceWithVat: 4200, originalPrice: 4700,   bonus: { type: 'discount',      label: 'Скидка 10%'      } },
   { id: 'o3',  medicineId: 'm1', distributor: distributors[2], expiryDate: '2026-03-10', paymentTypes: [pContr],               priceWithVat: 3900,                       bonus: { type: 'free_delivery', label: 'Беспл. доставка' } },
   { id: 'o3b', medicineId: 'm1', distributor: distributors[3],  expiryDate: '2026-06-01', paymentTypes: [p30d30, p0d45],  priceWithVat: 4100,                       bonus: { type: 'gift',          label: '+Товар'          } },
-  { id: 'o3e', medicineId: 'm1', distributor: distributors[6],  expiryDate: '2026-10-15', paymentTypes: [p100, p50d14],   priceWithVat: 4250,                       bonus: { type: 'cashback',      label: 'Кэшбэк'          } },
-  { id: 'o3f', medicineId: 'm1', distributor: distributors[7],  expiryDate: '2026-07-20', paymentTypes: [p30d30],         priceWithVat: 4050, originalPrice: 4400,   bonus: { type: 'discount',      label: 'Скидка %'        } },
-  { id: 'o3g', medicineId: 'm1', distributor: distributors[8],  expiryDate: '2026-11-01', paymentTypes: [pContr],         priceWithVat: 3850,                       bonus: { type: 'free_delivery', label: 'Беспл. доставка' } },
-  { id: 'o3h', medicineId: 'm1', distributor: distributors[9],  expiryDate: '2026-04-30', paymentTypes: [p50d14, p0d45],  priceWithVat: 4600,                                                                                  },
-  { id: 'o3i', medicineId: 'm1', distributor: distributors[10], expiryDate: '2025-12-10', paymentTypes: [p20d60],         priceWithVat: 4150,                       bonus: { type: 'gift',          label: '+Товар'          } },
-  { id: 'o3j', medicineId: 'm1', distributor: distributors[11], expiryDate: '2026-09-05', paymentTypes: [p100],           priceWithVat: 3980,                                                                                  },
-  { id: 'o3k', medicineId: 'm1', distributor: distributors[12], expiryDate: '2026-05-15', paymentTypes: [p50d14, p30d30], priceWithVat: 4320,                       bonus: { type: 'cashback',      label: 'Кэшбэк'          } },
-  { id: 'o3l', medicineId: 'm1', distributor: distributors[13], expiryDate: '2026-12-20', paymentTypes: [pContr],         priceWithVat: 4450,                       bonus: { type: 'discount',      label: 'Скидка 5%'       } },
-  { id: 'o3m', medicineId: 'm1', distributor: distributors[14], expiryDate: '2026-08-25', paymentTypes: [p30d30, p20d60], priceWithVat: 4190,                       bonus: { type: 'free_delivery', label: 'Беспл. доставка' } },
-  { id: 'o3c', medicineId: 'm1', distributor: distributors[4], expiryDate: '2026-09-20', paymentTypes: [p100],                 priceWithVat: 4800,                                                                                  },
+  { id: 'o3e', medicineId: 'm1', distributor: distributors[0],  expiryDate: '2026-10-15', paymentTypes: [p100, p50d14],   priceWithVat: 4250,                       bonus: { type: 'cashback',      label: 'Кэшбэк'          } },
+  { id: 'o3f', medicineId: 'm1', distributor: distributors[1],  expiryDate: '2026-07-20', paymentTypes: [p30d30],         priceWithVat: 4050, originalPrice: 4400,   bonus: { type: 'discount',      label: 'Скидка %'        } },
+  { id: 'o3g', medicineId: 'm1', distributor: distributors[2],  expiryDate: '2026-11-01', paymentTypes: [pContr],         priceWithVat: 3850,                       bonus: { type: 'free_delivery', label: 'Беспл. доставка' } },
+  { id: 'o3h', medicineId: 'm1', distributor: distributors[3],  expiryDate: '2026-04-30', paymentTypes: [p50d14, p0d45],  priceWithVat: 4600,                                                                                  },
+  { id: 'o3i', medicineId: 'm1', distributor: distributors[4],  expiryDate: '2025-12-10', paymentTypes: [p20d60],         priceWithVat: 4150,                       bonus: { type: 'gift',          label: '+Товар'          } },
+  { id: 'o3j', medicineId: 'm1', distributor: distributors[5],  expiryDate: '2026-09-05', paymentTypes: [p100],           priceWithVat: 3980,                                                                                  },
+  { id: 'o3k', medicineId: 'm1', distributor: distributors[6],  expiryDate: '2026-05-15', paymentTypes: [p50d14, p30d30], priceWithVat: 4320,                       bonus: { type: 'cashback',      label: 'Кэшбэк'          } },
+  { id: 'o3l', medicineId: 'm1', distributor: distributors[7],  expiryDate: '2026-12-20', paymentTypes: [pContr],         priceWithVat: 4450,                       bonus: { type: 'discount',      label: 'Скидка 5%'       } },
+  { id: 'o3m', medicineId: 'm1', distributor: distributors[2],  expiryDate: '2026-08-25', paymentTypes: [p30d30, p20d60], priceWithVat: 4190,                       bonus: { type: 'free_delivery', label: 'Беспл. доставка' } },
+  { id: 'o3c', medicineId: 'm1', distributor: distributors[8], expiryDate: '2026-09-20', paymentTypes: [p100],                 priceWithVat: 4800,                                                                                  },
   { id: 'o3d', medicineId: 'm1', distributor: distributors[5], expiryDate: '2025-11-05', paymentTypes: [p50d14, p20d60],       priceWithVat: 4350,                       bonus: { type: 'discount',      label: 'Скидка %'        } },
 
   // Отривин (m2)
   { id: 'o4',  medicineId: 'm2', distributor: distributors[0], expiryDate: '2026-06-30', paymentTypes: [p100, p50d14],         priceWithVat: 1800,                       bonus: { type: 'cashback',      label: 'Кэшбэк'          } },
   { id: 'o5',  medicineId: 'm2', distributor: distributors[3], expiryDate: '2026-01-15', paymentTypes: [p30d30],               priceWithVat: 1650,                                                                                  },
-  { id: 'o6',  medicineId: 'm2', distributor: distributors[5], expiryDate: '2025-09-20', paymentTypes: [p50d14, p30d30],       priceWithVat: 1750, originalPrice: 1900,   bonus: { type: 'discount',      label: 'Скидка %'        } },
+  { id: 'o6',  medicineId: 'm2', distributor: distributors[9], expiryDate: '2025-09-20', paymentTypes: [p50d14, p30d30],       priceWithVat: 1750, originalPrice: 1900,   bonus: { type: 'discount',      label: 'Скидка %'        } },
 
   // Синекод (m3)
   { id: 'o7',  medicineId: 'm3', distributor: distributors[1], expiryDate: '2026-10-01', paymentTypes: [p100, p0d45],          priceWithVat: 2300,                       bonus: { type: 'free_delivery', label: 'Беспл. доставка' } },
@@ -107,17 +102,17 @@ export const mockSupplierOffers: SupplierOffer[] = [
   { id: 'o13', medicineId: 'm5', distributor: distributors[5], expiryDate: '2026-06-15', paymentTypes: [pContr],               priceWithVat: 480,                        bonus: { type: 'cashback',      label: 'Кэшбэк'          } },
 
   // Амоксициллин (m6)
-  { id: 'o14', medicineId: 'm6', distributor: distributors[0], expiryDate: '2026-11-20', paymentTypes: [p100, p50d14],         priceWithVat: 3200,                       bonus: { type: 'free_delivery', label: 'Беспл. доставка' } },
+  { id: 'o14', medicineId: 'm6', distributor: distributors[6], expiryDate: '2026-11-20', paymentTypes: [p100, p50d14],         priceWithVat: 3200,                       bonus: { type: 'free_delivery', label: 'Беспл. доставка' } },
   { id: 'o15', medicineId: 'm6', distributor: distributors[1], expiryDate: '2025-10-05', paymentTypes: [p50d14, p30d30],       priceWithVat: 2900, originalPrice: 3100,   bonus: { type: 'discount',      label: 'Скидка %'        } },
-  { id: 'o16', medicineId: 'm6', distributor: distributors[4], expiryDate: '2026-07-30', paymentTypes: [p30d30],               priceWithVat: 3100,                                                                                  },
+  { id: 'o16', medicineId: 'm6', distributor: distributors[8], expiryDate: '2026-07-30', paymentTypes: [p30d30],               priceWithVat: 3100,                                                                                  },
 
   // Аугментин (m7)
   { id: 'o17', medicineId: 'm7', distributor: distributors[0], expiryDate: '2026-08-01', paymentTypes: [p100, p50d14, p0d45],  priceWithVat: 7500,                       bonus: { type: 'cashback',      label: 'Кэшбэк'          } },
   { id: 'o18', medicineId: 'm7', distributor: distributors[2], expiryDate: '2026-02-28', paymentTypes: [pContr],               priceWithVat: 7200, originalPrice: 7800,   bonus: { type: 'discount',      label: 'Скидка 10%'      } },
-  { id: 'o19', medicineId: 'm7', distributor: distributors[5], expiryDate: '2025-11-10', paymentTypes: [p50d14],               priceWithVat: 7800,                       bonus: { type: 'gift',          label: '+Товар'          } },
+  { id: 'o19', medicineId: 'm7', distributor: distributors[9], expiryDate: '2025-11-10', paymentTypes: [p50d14],               priceWithVat: 7800,                       bonus: { type: 'gift',          label: '+Товар'          } },
 
   // Пантопразол (m8)
-  { id: 'o20', medicineId: 'm8', distributor: distributors[1], expiryDate: '2026-04-20', paymentTypes: [p100],                 priceWithVat: 2600,                                                                                  },
+  { id: 'o20', medicineId: 'm8', distributor: distributors[7], expiryDate: '2026-04-20', paymentTypes: [p100],                 priceWithVat: 2600,                                                                                  },
   { id: 'o21', medicineId: 'm8', distributor: distributors[3], expiryDate: '2026-09-15', paymentTypes: [p30d30, p20d60],       priceWithVat: 2400,                       bonus: { type: 'cashback',      label: 'Кэшбэк'          } },
 
   // Лоратадин (m9)
@@ -127,7 +122,7 @@ export const mockSupplierOffers: SupplierOffer[] = [
   // Цетиризин (m10)
   { id: 'o24', medicineId: 'm10', distributor: distributors[2], expiryDate: '2026-10-10', paymentTypes: [p100, p30d30],        priceWithVat: 920,                        bonus: { type: 'cashback',      label: 'Кэшбэк'          } },
   { id: 'o25', medicineId: 'm10', distributor: distributors[5], expiryDate: '2026-05-05', paymentTypes: [p50d14],              priceWithVat: 880,                                                                                   },
-  { id: 'o26', medicineId: 'm10', distributor: distributors[0], expiryDate: '2025-12-20', paymentTypes: [p30d30, p0d45],       priceWithVat: 900, originalPrice: 980,     bonus: { type: 'discount',      label: 'Скидка %'        } },
+  { id: 'o26', medicineId: 'm10', distributor: distributors[6], expiryDate: '2025-12-20', paymentTypes: [p30d30, p0d45],       priceWithVat: 900, originalPrice: 980,     bonus: { type: 'discount',      label: 'Скидка %'        } },
 
   // Бисопролол (m11)
   { id: 'o27', medicineId: 'm11', distributor: distributors[1], expiryDate: '2026-07-15', paymentTypes: [p100, p50d14],        priceWithVat: 1500,                       bonus: { type: 'gift',          label: '+Товар'          } },
@@ -139,20 +134,20 @@ export const mockSupplierOffers: SupplierOffer[] = [
   { id: 'o31', medicineId: 'm12', distributor: distributors[2], expiryDate: '2025-09-10', paymentTypes: [p30d30],              priceWithVat: 1050, originalPrice: 1150,   bonus: { type: 'discount',      label: 'Скидка 10%'      } },
 
   // Омез (m13)
-  { id: 'o32', medicineId: 'm13', distributor: distributors[4], expiryDate: '2026-08-30', paymentTypes: [p100, p0d45],         priceWithVat: 1700,                       bonus: { type: 'cashback',      label: 'Кэшбэк'          } },
+  { id: 'o32', medicineId: 'm13', distributor: distributors[8], expiryDate: '2026-08-30', paymentTypes: [p100, p0d45],         priceWithVat: 1700,                       bonus: { type: 'cashback',      label: 'Кэшбэк'          } },
   { id: 'o33', medicineId: 'm13', distributor: distributors[1], expiryDate: '2026-02-10', paymentTypes: [pContr],              priceWithVat: 1580,                       bonus: { type: 'gift',          label: '+Товар'          } },
 
   // Но-шпа (m14)
   { id: 'o34', medicineId: 'm14', distributor: distributors[0], expiryDate: '2027-01-15', paymentTypes: [p100, p50d14],        priceWithVat: 2200,                       bonus: { type: 'free_delivery', label: 'Беспл. доставка' } },
   { id: 'o35', medicineId: 'm14', distributor: distributors[3], expiryDate: '2026-09-20', paymentTypes: [p50d14, p30d30],      priceWithVat: 2050,                                                                                  },
-  { id: 'o36', medicineId: 'm14', distributor: distributors[5], expiryDate: '2025-11-30', paymentTypes: [p30d30, p20d60],      priceWithVat: 2150, originalPrice: 2300,   bonus: { type: 'discount',      label: 'Скидка %'        } },
+  { id: 'o36', medicineId: 'm14', distributor: distributors[9], expiryDate: '2025-11-30', paymentTypes: [p30d30, p20d60],      priceWithVat: 2150, originalPrice: 2300,   bonus: { type: 'discount',      label: 'Скидка %'        } },
 
   // Актовегин (m15)
-  { id: 'o37', medicineId: 'm15', distributor: distributors[0], expiryDate: '2026-10-05', paymentTypes: [p100, p50d14, p0d45], priceWithVat: 12000,                      bonus: { type: 'cashback',      label: 'Кэшбэк'          } },
+  { id: 'o37', medicineId: 'm15', distributor: distributors[6], expiryDate: '2026-10-05', paymentTypes: [p100, p50d14, p0d45], priceWithVat: 12000,                      bonus: { type: 'cashback',      label: 'Кэшбэк'          } },
   { id: 'o38', medicineId: 'm15', distributor: distributors[2], expiryDate: '2026-06-10', paymentTypes: [pContr],              priceWithVat: 11500, originalPrice: 12500, bonus: { type: 'discount',      label: 'Скидка 10%'      } },
 
   // Мексидол (m16)
-  { id: 'o39', medicineId: 'm16', distributor: distributors[1], expiryDate: '2026-12-15', paymentTypes: [p100, p30d30],        priceWithVat: 8500,                       bonus: { type: 'cashback',      label: 'Кэшбэк'          } },
+  { id: 'o39', medicineId: 'm16', distributor: distributors[7], expiryDate: '2026-12-15', paymentTypes: [p100, p30d30],        priceWithVat: 8500,                       bonus: { type: 'cashback',      label: 'Кэшбэк'          } },
   { id: 'o40', medicineId: 'm16', distributor: distributors[4], expiryDate: '2025-08-20', paymentTypes: [p50d14, p20d60],      priceWithVat: 8200, originalPrice: 8800,   bonus: { type: 'discount',      label: 'Скидка %'        } },
   { id: 'o41', medicineId: 'm16', distributor: distributors[5], expiryDate: '2026-04-01', paymentTypes: [p30d30],              priceWithVat: 8800,                       bonus: { type: 'gift',          label: '+Товар'          } },
 

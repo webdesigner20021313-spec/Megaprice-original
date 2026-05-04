@@ -10,13 +10,15 @@ import { cn } from '@/lib/utils'
 import { formatCurrency } from '@/lib/format'
 import { Button } from '@/components/ui/Button'
 import { usePurchaseCart } from '@/pages/purchase/hooks/usePurchaseCart'
+import { useOrdersStore } from '@/stores/useOrdersStore'
+import { useWholesalersStore } from '@/stores/useWholesalersStore'
 import { mockPharmacies } from '@/mocks/purchase.mocks'
 import type { CartItem, Pharmacy } from '@/pages/purchase/types/purchase.types'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface DistGroup { id: string; name: string; city: string; items: CartItem[]; contactType: 'telegram' | 'email'; contact: string }
-interface ConfirmPayload { groups: DistGroup[]; pharmacy: Pharmacy }
+interface ConfirmPayload { groups: DistGroup[]; pharmacy: Pharmacy; orderNum: string }
 
 // ─── Qty Control ──────────────────────────────────────────────────────────────
 
@@ -61,10 +63,8 @@ function EmptyCart() {
 
 function SuccessModal({ payload, onClose }: { payload: ConfirmPayload; onClose: () => void }) {
   const navigate = useNavigate()
-  const orderNum = useState(() => `ЗАК-${Math.floor(10000 + Math.random() * 90000)}`)[0]
-  const totalSum = payload.groups.reduce(
-    (s, g) => s + g.items.reduce((ss, i) => ss + i.offer.priceWithVat * i.quantity, 0), 0,
-  )
+  const orderNum = payload.orderNum
+  const totalSum = payload.groups.reduce((s, g) => s + (g as DistGroup & { subtotal?: number }).subtotal!, 0)
   const totalItems = payload.groups.reduce((s, g) => s + g.items.length, 0)
 
   return (
@@ -111,44 +111,41 @@ function SuccessModal({ payload, onClose }: { payload: ConfirmPayload; onClose: 
           </div>
         </div>
 
-        {/* Оптовики + каналы */}
+        {/* Дистрибуторы */}
         <div className="px-6 pb-6">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
-            Уведомления отправлены
-          </p>
-          <div className="space-y-2">
-            {payload.groups.map(group => (
-              <div key={group.id} className="flex items-start gap-3 rounded-xl bg-gray-50 px-3 py-3">
-                {/* Галочка */}
-                <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#22C55E]">
-                  <Check className="h-3 w-3 text-white" strokeWidth={2.5} />
-                </div>
-                {/* Название + канал */}
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-gray-800">{group.name}</p>
-                  <div className="mt-1 flex items-center gap-1.5">
+          <div className="overflow-hidden rounded-xl border border-gray-100">
+            {/* Шапка таблицы */}
+            <div className="grid grid-cols-[1fr_auto] border-b border-gray-100 bg-gray-50 px-4 py-2">
+              <span className="text-xs font-semibold text-gray-400">Дистрибутор</span>
+              <span className="text-xs font-semibold text-gray-400">Поз.</span>
+            </div>
+            {/* Строки */}
+            {payload.groups.map((group, idx) => (
+              <div
+                key={group.id}
+                className={cn('grid grid-cols-[1fr_auto] items-center px-4 py-3', idx !== payload.groups.length - 1 && 'border-b border-gray-100')}
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-gray-900">{group.name}</p>
+                  <div className="mt-0.5 flex items-center gap-1">
                     {group.contactType === 'telegram' ? (
                       <>
-                        <svg className="h-3 w-3 shrink-0 text-sky-500" viewBox="0 0 24 24" fill="currentColor">
+                        <svg className="h-3 w-3 shrink-0 text-sky-400" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L8.32 13.617l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.828.942z" />
                         </svg>
-                        <span className="text-xs text-sky-500">{group.contact}</span>
+                        <span className="text-xs text-gray-400">{group.contact}</span>
                       </>
                     ) : (
                       <>
                         <svg className="h-3 w-3 shrink-0 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <rect x="2" y="4" width="20" height="16" rx="2" />
-                          <path d="m2 7 10 7 10-7" />
+                          <rect x="2" y="4" width="20" height="16" rx="2" /><path d="m2 7 10 7 10-7" />
                         </svg>
                         <span className="text-xs text-gray-400">{group.contact}</span>
                       </>
                     )}
                   </div>
                 </div>
-                {/* Кол-во позиций */}
-                <span className="shrink-0 text-xs text-gray-400">
-                  {group.items.length} поз.
-                </span>
+                <span className="text-sm font-semibold tabular-nums text-gray-900">{group.items.length}</span>
               </div>
             ))}
           </div>
@@ -178,9 +175,16 @@ function SuccessModal({ payload, onClose }: { payload: ConfirmPayload; onClose: 
 // ─── CartPage ─────────────────────────────────────────────────────────────────
 
 export function CartPage() {
-  const items      = usePurchaseCart(s => s.items)
-  const removeItem = usePurchaseCart(s => s.removeItem)
-  const updateQty  = usePurchaseCart(s => s.updateQuantity)
+  const items       = usePurchaseCart(s => s.items)
+  const removeItem  = usePurchaseCart(s => s.removeItem)
+  const updateQty   = usePurchaseCart(s => s.updateQuantity)
+  const addOrder    = useOrdersStore(s => s.addOrder)
+  const getDiscount = useWholesalersStore(s => s.getDiscount)
+
+  const effPrice = useCallback((item: CartItem) => {
+    const d = getDiscount(item.offer.distributor.name)
+    return d ? Math.round(item.offer.priceWithVat * (1 - d / 100)) : item.offer.priceWithVat
+  }, [getDiscount])
 
   const [pharmacyId,     setPharmacyId]     = useState(mockPharmacies[0]?.id ?? '')
   const [checkedIds,     setCheckedIds]     = useState<Set<string>>(new Set())
@@ -265,12 +269,12 @@ export function CartPage() {
         return {
           ...g,
           items:    selected,
-          subtotal: selected.reduce((s, i) => s + i.offer.priceWithVat * i.quantity, 0),
+          subtotal: selected.reduce((s, i) => s + effPrice(i) * i.quantity, 0),
           qty:      selected.reduce((s, i) => s + i.quantity, 0),
         }
       })
       .filter(Boolean) as Array<DistGroup & { subtotal: number; qty: number }>,
-    [groups, checkedIds],
+    [groups, checkedIds, effPrice],
   )
 
   const hasSelection   = invoiceGroups.length > 0
@@ -280,7 +284,37 @@ export function CartPage() {
 
   function createOrder() {
     if (!invoiceGroups.length) return
-    setSuccessPayload({ groups: invoiceGroups, pharmacy })
+    const orderNum = `ЗАК-${Math.floor(10000 + Math.random() * 90000)}`
+    const order = {
+      id: `ord-${Date.now()}`,
+      number: orderNum,
+      pharmacyName: pharmacy.name,
+      pharmacyAddress: pharmacy.address,
+      pharmacyCity: pharmacy.city,
+      status: 'new' as const,
+      createdAt: new Date().toISOString(),
+      totalSum: invoiceTotal,
+      totalQty: invoiceQtyCnt,
+      groups: invoiceGroups.map(g => ({
+        distributorId:    g.id,
+        distributorName:  g.name,
+        distributorCity:  g.city,
+        contactType:      g.contactType,
+        contact:          g.contact,
+        distributorStatus: 'new' as const,
+        subtotal:         g.subtotal,
+        items: g.items.map((item, idx) => ({
+          id:           `${g.id}-${idx}-${Date.now()}`,
+          medicineName: item.medicine.name,
+          manufacturer: item.medicine.manufacturer,
+          country:      item.medicine.country,
+          quantity:     item.quantity,
+          priceWithVat: effPrice(item),
+        })),
+      })),
+    }
+    addOrder(order)
+    setSuccessPayload({ groups: invoiceGroups, pharmacy, orderNum })
   }
 
   function handleSuccessClose() {
@@ -315,7 +349,7 @@ export function CartPage() {
 
           <div className="h-5 w-px bg-gray-200 shrink-0" />
 
-          {/* Фильтр по оптовикам */}
+          {/* Фильтр по дистрибуторам */}
           <div className="flex flex-1 gap-1.5 overflow-x-auto">
             <button
               onClick={() => setDistFilter(null)}
@@ -368,7 +402,7 @@ export function CartPage() {
                       className="h-4 w-4 cursor-pointer rounded border-gray-300 accent-gray-900"
                     />
                   </th>
-                  <th className="px-3 text-left text-sm font-semibold text-gray-700" colSpan={5}>Оптовик</th>
+                  <th className="px-3 text-left text-sm font-semibold text-gray-700" colSpan={5}>Дистрибутор</th>
                   <th className="w-[150px] px-3 text-right text-sm font-semibold text-gray-700">Сумма</th>
                   <th className="w-10 px-4" />
                 </tr>
@@ -379,12 +413,12 @@ export function CartPage() {
                   const isCollapsed      = collapsed.has(group.id)
                   const groupAllChecked  = group.items.every(i => checkedIds.has(i.offerId))
                   const groupSomeChecked = group.items.some(i => checkedIds.has(i.offerId))
-                  const groupTotal       = group.items.reduce((s, i) => s + i.offer.priceWithVat * i.quantity, 0)
+                  const groupTotal       = group.items.reduce((s, i) => s + effPrice(i) * i.quantity, 0)
                   const groupQtyTotal    = group.items.reduce((s, i) => s + i.quantity, 0)
 
                   return (
                     <>
-                      {/* ── Строка оптовика ── */}
+                      {/* ── Строка дистрибутора ── */}
                       <tr key={`group-${group.id}`} className="border-t border-gray-200 bg-gray-100">
                         <td className="px-4 py-2.5">
                           <input
@@ -432,7 +466,7 @@ export function CartPage() {
                       )}
                       {!isCollapsed && group.items.map(item => {
                         const isChecked = checkedIds.has(item.offerId)
-                        const lineTotal = item.offer.priceWithVat * item.quantity
+                        const lineTotal = effPrice(item) * item.quantity
 
                         return (
                           <tr
@@ -475,7 +509,7 @@ export function CartPage() {
 
                             {/* Цена за шт */}
                             <td className="px-3 py-3 text-right text-sm tabular-nums whitespace-nowrap text-gray-600">
-                              {formatCurrency(item.offer.priceWithVat)}
+                              {formatCurrency(effPrice(item))}
                             </td>
 
                             {/* Количество */}
@@ -581,7 +615,7 @@ export function CartPage() {
                     <span className="text-xs tabular-nums text-gray-600">{invoiceQtyCnt}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-600">Оптовиков</span>
+                    <span className="text-xs text-gray-600">Дистрибуторов</span>
                     <span className="text-xs tabular-nums text-gray-600">{invoiceGroups.length}</span>
                   </div>
                 </div>
@@ -615,7 +649,7 @@ export function CartPage() {
                               </p>
                               <span className="shrink-0 text-[11px] text-gray-400">×{item.quantity}</span>
                               <span className="w-16 shrink-0 text-right text-xs font-medium text-gray-800">
-                                {formatCurrency(item.offer.priceWithVat * item.quantity)}
+                                {formatCurrency(effPrice(item) * item.quantity)}
                               </span>
                             </div>
                           ))}
