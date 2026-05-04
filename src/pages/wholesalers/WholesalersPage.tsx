@@ -1,6 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { Search, Package, Pencil, Send, Phone, Check, X } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { formatCurrency } from '@/lib/format'
 import { mockWholesalers, type Wholesaler } from '@/mocks/wholesalers.mocks'
 import { useWholesalersStore } from '@/stores/useWholesalersStore'
