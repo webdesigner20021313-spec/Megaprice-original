@@ -1,7 +1,8 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import {
   Search, X, Package, Building2,
-  ChevronDown, Check, Zap, TrendingDown, Eye, Plus, Download, Star,
+  ChevronDown, Check, Zap, TrendingDown, Plus, Download, Star, Calendar,
+  Sparkles, ArrowRightLeft, AlertTriangle, ShoppingCart as CartIcon,
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { cn } from '@/lib/utils'
@@ -20,7 +21,7 @@ mockSupplierOffers.forEach(o => {
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type ScenarioKey = 'urgent' | 'oos' | 'overstock' | 'dead' | 'all'
-type PeriodKey   = 'week' | 'month' | 'quarter' | 'year'
+type PeriodKey   = '7d' | '30d' | '90d' | '1y' | 'custom'
 type ColKey      = 'status' | 'stock' | 'doc' | 'sales' | 'need'
 interface PharmacyBreakdown {
   id: string
@@ -146,10 +147,11 @@ const SCENARIOS: { key: ScenarioKey; label: string; filter: (i: NeedItem[]) => N
 ]
 
 const PERIODS: { key: PeriodKey; label: string; days: number }[] = [
-  { key: 'week',    label: 'Неделя',  days: 7 },
-  { key: 'month',   label: 'Месяц',   days: 30 },
-  { key: 'quarter', label: 'Квартал', days: 90 },
-  { key: 'year',    label: 'Год',     days: 365 },
+  { key: '7d',     label: '7 дней',      days: 7   },
+  { key: '30d',    label: '30 дней',     days: 30  },
+  { key: '90d',    label: '90 дней',     days: 90  },
+  { key: '1y',     label: '1 год',       days: 365 },
+  { key: 'custom', label: 'Свой период', days: 30  },
 ]
 
 const GROUPS = Array.from(new Set(mockNeedItems.map(i => i.group))).sort()
@@ -170,7 +172,7 @@ const INIT_WIDTHS: ColWidths = { status: 180, stock: 180, doc: 180, sales: 180, 
 const COL_CB     = 40
 const COL_MFR    = 280
 const COL_ACTION = 52
-const MIN_NAME   = 180
+const MIN_NAME   = 232
 const DRAWER_W   = 580
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -655,6 +657,510 @@ function NeedDrawer({ item, periodDays, selectedPharmacyId, activeOffer, onClose
   )
 }
 
+// ─── AI Recommendations ───────────────────────────────────────────────────────
+
+// Детерминированный генератор на основе строки (без зависимостей)
+function seededNum(seed: string, idx: number, min: number, max: number): number {
+  let h = 0
+  for (let i = 0; i < seed.length; i++) h = Math.imul(31, h) + seed.charCodeAt(i) | 0
+  h = Math.imul(h ^ (h >>> 16), 0x45d9f3b) ^ idx * 2654435761
+  return min + Math.abs(h) % (max - min + 1)
+}
+
+interface BranchData {
+  name:        string
+  stock:       number   // остаток в этом филиале
+  dailySales:  number   // средние продажи в день
+  daysOfCover: number   // хватит на N дней
+  expiryDays:  number   // дней до окончания самой ближней партии
+}
+
+// Короткое имя: «Здоровье» вместо «Филиал №1 «Здоровье»»
+function shortBranch(name: string) { return name.replace(/^Филиал №\d+\s*/, '') }
+
+const BRANCH_NAMES = [
+  'Филиал №1 «Здоровье»',
+  'Филиал №2 «Фармация»',
+  'Филиал №3 «Жизнь»',
+  'Филиал №4 «Мед-Сервис»',
+]
+
+function buildBranchData(item: NeedItem): BranchData[] {
+  const seed    = item.id
+  const count   = 3 + (seededNum(seed, 99, 0, 1))  // 3 или 4 филиала
+  const branches: BranchData[] = []
+
+  // Распределяем общий сток и продажи по филиалам
+  let remainStock = item.stock
+  let remainSales = item.avgDailySales
+
+  for (let i = 0; i < count; i++) {
+    const isLast = i === count - 1
+    const stockShare = isLast ? remainStock : Math.round(remainStock * seededNum(seed, i * 10, 15, 55) / 100)
+    const salesShare = isLast ? Math.max(0, remainSales) : parseFloat((remainSales * seededNum(seed, i * 10 + 1, 5, 50) / 100).toFixed(1))
+
+    // Для сценариев «мёртвый» и «overstock» — один филиал без продаж
+    let effectiveSales = salesShare
+    if ((item.status === 'dead' || item.status === 'overstock') && i === count - 1) {
+      effectiveSales = 0
+    }
+
+    const daysOfCover = effectiveSales > 0 ? Math.round(stockShare / effectiveSales) : 999
+    const expiryDays  = seededNum(seed, i * 10 + 5, 20, 180)
+
+    branches.push({
+      name:        BRANCH_NAMES[i],
+      stock:       Math.max(0, stockShare),
+      dailySales:  parseFloat(effectiveSales.toFixed(1)),
+      daysOfCover,
+      expiryDays,
+    })
+
+    remainStock -= stockShare
+    remainSales -= salesShare
+  }
+
+  return branches
+}
+
+// severity → visual tokens (aligned to style guide status colors)
+const SEV_TOKENS = {
+  red:    { border: '#FCA5A5', badge: 'bg-[#FEE2E2] text-[#991B1B]', icon: 'bg-[#FEE2E2] text-[#991B1B]' },
+  orange: { border: '#FCD34D', badge: 'bg-[#FEF3C7] text-[#92400E]', icon: 'bg-[#FEF3C7] text-[#92400E]' },
+  blue:   { border: '#93C5FD', badge: 'bg-[#DBEAFE] text-[#1E40AF]', icon: 'bg-[#DBEAFE] text-[#1E40AF]' },
+} as const
+
+interface AIRec {
+  id:           string
+  severity:     keyof typeof SEV_TOKENS
+  icon:         React.ReactNode
+  badgeLabel:   string
+  title:        string   // короткое название: "Срок годности истекает"
+  headline:     string   // конкретика: "через 38 дн. — 2 шт."
+  tableHeaders?: [string, string, string]
+  tableRows?:    [string, string, string][]
+  analysis?:    string
+  loss?:        string
+  steps:        string[]
+}
+
+function getAIRecommendations(item: NeedItem): AIRec[] {
+  const recs: AIRec[] = []
+  const fmt  = (n: number) => Math.round(n).toLocaleString('ru-RU')
+  const branches = buildBranchData(item)
+
+  const noSalesBranches    = branches.filter(b => b.dailySales === 0)
+  const goodBranches       = branches.filter(b => b.dailySales >= 1.5).sort((a, b) => b.dailySales - a.dailySales)
+  const expiryRiskBranches = branches.filter(b => b.expiryDays < 45 && b.stock > 0)
+  const networkDailySales  = branches.reduce((s, b) => s + b.dailySales, 0)
+
+  // ── Сценарий 1: в некоторых филиалах продаж нет ──────────────────────────
+  if (noSalesBranches.length > 0 && goodBranches.length > 0 && item.stock > 0) {
+    const transferQty = noSalesBranches.reduce((s, b) => s + b.stock, 0)
+    const canAbsorb   = goodBranches.filter(b => {
+      const afterTransfer = b.stock + Math.round(transferQty / goodBranches.length)
+      const projectedDoc  = b.dailySales > 0 ? afterTransfer / b.dailySales : 999
+      return projectedDoc <= b.expiryDays
+    })
+    const safeTargets = canAbsorb.length > 0 ? canAbsorb : goodBranches.slice(0, 2)
+    const perBranch   = Math.round(transferQty / safeTargets.length)
+    const riskyBranch = goodBranches.find(b => !canAbsorb.includes(b))
+
+    const tableRows = noSalesBranches.map(b =>
+      [shortBranch(b.name), '0 шт./день', `${fmt(b.stock)} шт.`] as [string, string, string]
+    )
+
+    const minExp = Math.min(...noSalesBranches.map(b => b.expiryDays))
+    const analysisParts = noSalesBranches.some(b => b.expiryDays < 90)
+      ? [`${fmt(transferQty)} шт. лежат без движения, а срок годности истекает через ${minExp} дн. Если не перевезти сейчас — весь этот остаток пропадёт.`]
+      : [`${fmt(transferQty)} шт. не приносят выручки — деньги заморожены. Там где товар продаётся, он нужен.`]
+
+    const steps = [
+      `Забрать ${fmt(transferQty)} шт. из ${noSalesBranches.map(b => b.name).join(' и ')}`,
+      `Распределить по ~${fmt(perBranch)} шт. в ${safeTargets.map(b => b.name).join(' и ')}`,
+    ]
+    if (riskyBranch) {
+      steps.push(`Не отправлять в ${riskyBranch.name} — запас там уже на ${riskyBranch.daysOfCover} дн., не успеют продать`)
+    }
+
+    recs.push({
+      id: 'transfer', severity: 'blue',
+      icon: <ArrowRightLeft className="h-4 w-4" />,
+      badgeLabel: 'Нет движения',
+      title: 'Товар не продаётся',
+      headline: `${fmt(transferQty)} шт. простаивают в ${noSalesBranches.length > 1 ? noSalesBranches.length + ' филиалах' : noSalesBranches[0].name}`,
+      tableHeaders: ['Филиал', 'Продаж/день', 'Остаток'],
+      tableRows,
+      analysis: analysisParts.join(' '),
+      steps,
+    })
+  }
+
+  // ── Сценарий 2: срок годности скоро заканчивается ────────────────────────
+  if (expiryRiskBranches.length > 0) {
+    const atRiskQty  = expiryRiskBranches.reduce((s, b) => s + b.stock, 0)
+    const atRiskLoss = atRiskQty * item.costPrice
+    const minExpiry  = Math.min(...expiryRiskBranches.map(r => r.expiryDays))
+    const fastBranches = branches
+      .filter(b => b.dailySales >= 1 && !expiryRiskBranches.includes(b))
+      .sort((a, b) => b.dailySales - a.dailySales).slice(0, 2)
+    const canSellInTime = fastBranches.reduce((s, b) => s + Math.round(b.dailySales * minExpiry), 0)
+
+    const tableRows = expiryRiskBranches.map(b =>
+      [shortBranch(b.name), `${b.expiryDays} дн.`, `${fmt(b.stock)} шт.`] as [string, string, string]
+    )
+
+    // Анализ: общая картина по всем филиалам с риском
+    const totalCanSell = expiryRiskBranches.reduce((s, b) => s + Math.round(b.dailySales * b.expiryDays), 0)
+    const totalWillExpire = Math.max(0, atRiskQty - totalCanSell)
+    let expiryAnalysis: string
+    if (totalWillExpire > 0) {
+      expiryAnalysis = `При текущем темпе продаж успеют реализовать ${fmt(totalCanSell)} шт. — ${fmt(totalWillExpire)} шт. просрочатся. Нужно действовать немедленно.`
+    } else {
+      expiryAnalysis = `Теоретически успеют продать, но запас на пределе — любое замедление спроса и часть товара просрочится.`
+    }
+    const analysisParts = [expiryAnalysis]
+
+    const steps: string[] = []
+    if (fastBranches.length > 0 && canSellInTime >= atRiskQty * 0.6) {
+      steps.push(`Срочно перевести в ${fastBranches.map(b => b.name).join(' и ')} — там продажи выше`)
+    } else {
+      steps.push(`Предложить ${fmt(Math.round(atRiskQty * 0.5))} шт. оптом другой аптеке`)
+      steps.push(`Запустить акцию −20–25% на оставшийся остаток`)
+    }
+    steps.push(`Не заказывать этот товар до продажи текущего запаса`)
+
+    recs.push({
+      id: 'expiry', severity: 'orange',
+      icon: <AlertTriangle className="h-4 w-4" />,
+      badgeLabel: 'Срок годности',
+      title: 'Срок годности истекает',
+      headline: `через ${minExpiry} дн. — ${fmt(atRiskQty)} шт.`,
+      tableHeaders: ['Филиал', 'До просрочки', 'Остаток'],
+      tableRows,
+      analysis: analysisParts.join(' '),
+      loss: `${fmt(atRiskLoss)} сум`,
+      steps,
+    })
+  }
+
+  // ── Сценарий 3: товар плохо продаётся во всей сети ───────────────────────
+  if (item.status === 'dead' || (networkDailySales < 0.5 && item.stock > 0)) {
+    const minExpiry    = Math.min(...branches.map(b => b.expiryDays))
+    const canSell      = networkDailySales > 0 ? Math.round(networkDailySales * minExpiry) : 0
+    const willExpire   = Math.max(0, item.stock - canSell)
+    const expireLoss   = willExpire * item.costPrice
+    const monthsToSell = networkDailySales > 0 ? (item.stock / networkDailySales / 30).toFixed(1) : '∞'
+
+    const tableRows = branches.map(b =>
+      [shortBranch(b.name), `${b.dailySales.toFixed(1)} шт./день`, b.daysOfCover < 999 ? `${b.daysOfCover} дн.` : '—'] as [string, string, string]
+    )
+
+    const analysis = networkDailySales > 0
+      ? `Весь остаток уйдёт за ~${monthsToSell} мес., но срок годности истекает через ${minExpiry} дн.${willExpire > 0 ? ` Около ${fmt(willExpire)} шт. не успеют продаться.` : ''}`
+      : `Продаж нет ни в одном филиале. Весь остаток (${fmt(item.stock)} шт.) просрочится через ${minExpiry} дн.`
+
+    const steps = [
+      `Продать ${fmt(Math.round(item.stock * 0.4))}–${fmt(Math.round(item.stock * 0.5))} шт. оптом другой аптеке`,
+      `Запустить скидку 15–25% чтобы ускорить продажи`,
+      `Убрать из плана закупок до роста спроса`,
+    ]
+
+    recs.push({
+      id: 'dead_network', severity: 'red',
+      icon: <TrendingDown className="h-4 w-4" />,
+      badgeLabel: 'Не продаётся',
+      title: 'Слабые продажи по всей сети',
+      headline: `${networkDailySales.toFixed(1)} шт./день — реализация займёт ~${monthsToSell} мес.`,
+      tableHeaders: ['Филиал', 'Продаж/день', 'Запас'],
+      tableRows,
+      analysis,
+      loss: willExpire > 0 ? `${fmt(expireLoss)} сум` : undefined,
+      steps,
+    })
+  }
+
+  // ── Сценарий 4: критический остаток / OOS ────────────────────────────────
+  if (item.status === 'oos' || item.status === 'critical') {
+    const surplus = branches.filter(b => b.daysOfCover > 60).sort((a, b) => b.stock - a.stock)
+
+    const tableRows = (surplus.length > 0 ? surplus : branches).map(b =>
+      [shortBranch(b.name), b.daysOfCover < 999 ? `${b.daysOfCover} дн.` : '—', `${fmt(b.stock)} шт.`] as [string, string, string]
+    )
+
+    let analysis = ''
+    if (item.status === 'oos') {
+      analysis = surplus.length > 0
+        ? `Каждый день простоя — ${fmt(item.lostRevenuePerDay)} сум упущенной выручки. В ${surplus.map(b => b.name).join(' и ')} есть излишки — можно перевезти быстро.`
+        : `Каждый день простоя — ${fmt(item.lostRevenuePerDay)} сум упущенной выручки. Свободных запасов в сети нет, нужен срочный заказ.`
+    } else {
+      analysis = surplus.length > 0
+        ? `Осталось на ${Math.round(item.daysOfCover)} дн. — этого может не хватить. В ${surplus.map(b => b.name).join(' и ')} запас избыточный, оттуда можно перевезти.`
+        : `Осталось на ${Math.round(item.daysOfCover)} дн. — нужно пополнить до того, как закончится.`
+    }
+
+    const steps: string[] = []
+    if (surplus.length > 0) {
+      const transferable = surplus.reduce((s, b) => s + Math.round(b.stock * 0.4), 0)
+      steps.push(`Перевести ~${fmt(transferable)} шт. из ${surplus.map(b => b.name).join(' и ')}`)
+    } else {
+      steps.push(`Сделать срочный заказ у поставщика — ${fmt(item.recommendedQty)} шт.`)
+    }
+    steps.push(`Поставить в приоритет ближайшей закупки`)
+
+    recs.push({
+      id: 'oos', severity: 'red',
+      icon: <CartIcon className="h-4 w-4" />,
+      badgeLabel: item.status === 'oos' ? 'Нет в наличии' : 'Критично мало',
+      title: item.status === 'oos' ? 'Товара нет в наличии' : 'Запас на исходе',
+      headline: item.status === 'oos'
+        ? `потери ${fmt(item.lostRevenuePerDay)} сум каждый день`
+        : `хватит на ${Math.round(item.daysOfCover)} дн. при ${item.avgDailySales.toFixed(1)} шт./день`,
+      tableHeaders: surplus.length > 0 ? ['Филиал (излишки)', 'Запас', 'Остаток'] : ['Филиал', 'Запас', 'Остаток'],
+      tableRows,
+      analysis,
+      steps,
+    })
+  }
+
+  return recs
+}
+
+function AIAdviceModal({ item, onClose }: { item: NeedItem; onClose: () => void }) {
+  const recs = useMemo(() => getAIRecommendations(item), [item])
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/30" />
+      <div
+        className="relative flex w-full max-w-[480px] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg"
+        style={{ maxHeight: '88vh' }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* ── Header ─────────────────────────────────────────────────────── */}
+        <div className="shrink-0 border-b border-gray-200 px-5 py-3.5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-2.5 min-w-0">
+              <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gray-100">
+                <Sparkles className="h-3.5 w-3.5 text-gray-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-gray-900">{item.name}</p>
+                <p className="mt-0.5 text-xs text-gray-400">{item.manufacturer} · {item.country}</p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* ── Рекомендации ───────────────────────────────────────────────── */}
+        <div className="flex-1 overflow-y-auto bg-white">
+          {recs.length === 0 ? (
+            <div className="flex flex-col items-center py-14 text-center">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#D1FAE5]">
+                <Check className="h-5 w-5 text-[#065F46]" />
+              </div>
+              <p className="text-sm font-semibold text-gray-900">Всё в порядке</p>
+              <p className="mt-1 text-sm text-gray-500">Товар продаётся нормально — плановых закупок достаточно</p>
+            </div>
+          ) : (
+            recs.map((rec, recIdx) => {
+              const isLast = recIdx === recs.length - 1
+              return (
+                <div key={rec.id} className={cn(!isLast && 'border-b border-gray-200')}>
+
+                  {/* ① Название */}
+                  <div className="flex items-baseline justify-between gap-3 px-5 pt-4 pb-3">
+                    <p className="text-base font-bold text-gray-900 leading-snug">{rec.title}</p>
+                    <p className="shrink-0 text-xs text-gray-400">{rec.headline}</p>
+                  </div>
+
+                  {/* ② Описание проблемы — красный блок */}
+                  {rec.analysis && (
+                    <div className="px-5 pb-3">
+                      <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-3">
+                        <p className="text-sm leading-relaxed text-red-900">{rec.analysis}</p>
+                        {rec.loss && (
+                          <div className="mt-2 flex items-center gap-1.5 border-t border-red-200 pt-2">
+                            <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-red-500" />
+                            <p className="text-xs font-semibold text-red-700">Возможный убыток: {rec.loss}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ③ Таблица по филиалам */}
+                  {rec.tableRows && rec.tableRows.length > 0 && (
+                    <div className="px-5 pb-3">
+                      <div className="overflow-hidden rounded-lg border border-gray-200">
+                        {rec.tableHeaders && (
+                          <div className="grid grid-cols-3 border-b border-gray-200 bg-gray-50 px-3 py-2">
+                            {rec.tableHeaders.map((h, hi) => (
+                              <p key={hi} className={cn('text-xs font-semibold uppercase text-gray-400', hi > 0 && 'text-right')}>{h}</p>
+                            ))}
+                          </div>
+                        )}
+                        {rec.tableRows.map((row, ri) => (
+                          <div key={ri} className={cn('grid grid-cols-3 px-3 py-2.5', ri < rec.tableRows!.length - 1 && 'border-b border-gray-100')}>
+                            <p className="truncate text-sm text-gray-700">{row[0]}</p>
+                            <p className="text-right text-sm text-gray-500">{row[1]}</p>
+                            <p className="text-right text-sm font-semibold text-gray-900">{row[2]}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ④ Решения */}
+                  <div className="px-5 pb-5">
+                    <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-3">
+                      <ul className="space-y-2">
+                        {rec.steps.map((step, si) => (
+                          <li key={si} className="flex items-start gap-2.5">
+                            <span className="mt-px flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-green-600 text-[10px] font-bold leading-none text-white">
+                              {si + 1}
+                            </span>
+                            <span className="text-sm leading-snug text-green-900">{step}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                </div>
+              )
+            })
+          )}
+        </div>
+
+        {/* ── Footer ─────────────────────────────────────────────────────── */}
+        <div className="shrink-0 border-t border-gray-200 bg-white px-5 py-3">
+          <button
+            onClick={onClose}
+            className="h-10 w-full rounded-lg bg-gray-900 text-sm font-semibold text-white transition-all duration-200 hover:bg-black"
+          >
+            Понятно
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── RangeCalendar ───────────────────────────────────────────────────────────
+
+const MONTHS_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']
+const DAYS_RU   = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс']
+
+function toISO(d: Date) { return d.toISOString().slice(0, 10) }
+function fmtDate(iso: string) {
+  if (!iso) return ''
+  const [y, m, day] = iso.split('-')
+  return `${day}.${m}.${y}`
+}
+
+function RangeCalendar({ from, to, onChange }: {
+  from: string
+  to: string
+  onChange: (from: string, to: string) => void
+}) {
+  const today    = new Date()
+  const [vy, setVy] = useState(today.getFullYear())
+  const [vm, setVm] = useState(today.getMonth())
+  const [hover, setHover] = useState('')
+
+  const prevM = () => { if (vm === 0) { setVy(y => y-1); setVm(11) } else setVm(m => m-1) }
+  const nextM = () => { if (vm === 11) { setVy(y => y+1); setVm(0)  } else setVm(m => m+1) }
+
+  // Build grid cells (Mon-start)
+  const cells = useMemo(() => {
+    const first = new Date(vy, vm, 1)
+    const last  = new Date(vy, vm + 1, 0)
+    const pad   = (first.getDay() + 6) % 7
+    const arr: (Date | null)[] = Array(pad).fill(null)
+    for (let d = 1; d <= last.getDate(); d++) arr.push(new Date(vy, vm, d))
+    return arr
+  }, [vy, vm])
+
+  function handleClick(date: Date) {
+    const iso = toISO(date)
+    if (!from || (from && to)) {
+      onChange(iso, '')
+    } else {
+      if (iso >= from) onChange(from, iso)
+      else             onChange(iso, from)
+    }
+  }
+
+  const todayISO = toISO(today)
+
+  return (
+    <div className="select-none">
+      {/* Header */}
+      <div className="mb-2 flex items-center justify-between">
+        <button onClick={prevM} className="flex h-7 w-7 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100">
+          <ChevronDown className="h-3.5 w-3.5 rotate-90" />
+        </button>
+        <span className="text-xs font-semibold text-gray-700">{MONTHS_RU[vm]} {vy}</span>
+        <button onClick={nextM} className="flex h-7 w-7 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100">
+          <ChevronDown className="h-3.5 w-3.5 -rotate-90" />
+        </button>
+      </div>
+
+      {/* Day names */}
+      <div className="mb-1 grid grid-cols-7">
+        {DAYS_RU.map(d => (
+          <div key={d} className="text-center text-[10px] font-semibold text-gray-400">{d}</div>
+        ))}
+      </div>
+
+      {/* Day cells */}
+      <div className="grid grid-cols-7 gap-y-0.5">
+        {cells.map((date, i) => {
+          if (!date) return <div key={`e${i}`} />
+          const iso  = toISO(date)
+          const end  = to || hover
+          const lo   = from && end ? (from <= end ? from : end) : from
+          const hi   = from && end ? (from <= end ? end  : from) : ''
+          const isF  = iso === from
+          const isT  = iso === (to || (from && hover ? hover : ''))
+          const inR  = !!lo && !!hi && iso > lo && iso < hi
+          const isTod = iso === todayISO
+          return (
+            <button
+              key={iso}
+              onClick={() => handleClick(date)}
+              onMouseEnter={() => { if (from && !to) setHover(iso) }}
+              onMouseLeave={() => setHover('')}
+              className={cn(
+                'h-7 w-full text-xs transition-colors',
+                (isF || isT)
+                  ? 'rounded-full bg-gray-900 font-semibold text-white'
+                  : inR
+                    ? 'bg-gray-100 text-gray-800'
+                    : cn('rounded-full text-gray-700 hover:bg-gray-100', isTod && 'font-bold'),
+              )}
+            >
+              {date.getDate()}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Hint */}
+      <p className="mt-2 text-center text-[10px] text-gray-400">
+        {!from ? 'Выберите начало периода' : !to ? 'Выберите конец периода' : `${fmtDate(from)} — ${fmtDate(to)}`}
+      </p>
+    </div>
+  )
+}
+
 // ─── NeedPage ─────────────────────────────────────────────────────────────────
 
 export function NeedPage() {
@@ -666,16 +1172,20 @@ export function NeedPage() {
 
   // Other filters
   const [scenario] = useState<ScenarioKey>('all')
-  const [period,       setPeriod]      = useState<PeriodKey>('week')
+  const [period,       setPeriod]      = useState<PeriodKey>('30d')
+  const [periodOpen,   setPeriodOpen]  = useState(false)
+  const [customFrom,   setCustomFrom]  = useState('')
+  const [customTo,     setCustomTo]    = useState('')
   const [search,       setSearch]      = useState('')
-  const [minSales,     setMinSales]    = useState('')
+  const [minSales]    = useState('')
   const [groupFilter,  setGroupFilter] = useState<string | null>(null)
   const [groupOpen,    setGroupOpen]   = useState(false)
   const [statusFilter, setStatusFilter] = useState<NeedStatus[]>([])
-  const [statusOpen,   setStatusOpen]  = useState(false)
+
   const [checkedIds,      setCheckedIds]      = useState<string[]>([])
   const [drawerItem,      setDrawerItem]      = useState<NeedItem | null>(null)
   const [offersModalItem, setOffersModalItem] = useState<NeedItem | null>(null)
+  const [aiItem,          setAiItem]          = useState<NeedItem | null>(null)
   const [selectedOfferMap, setSelectedOfferMap] = useState<Record<string, SupplierOffer>>({})
 
   // Table container width → rubber name column
@@ -734,7 +1244,11 @@ export function NeedPage() {
   function handleColDragEnd() { dragColRef.current = null; setOverCol(null) }
 
   // Derived
-  const periodDays = PERIODS.find(p => p.key === period)!.days
+  const periodDays = period === 'custom'
+    ? (customFrom && customTo
+        ? Math.max(1, Math.round((new Date(customTo).getTime() - new Date(customFrom).getTime()) / 86_400_000))
+        : 30)
+    : PERIODS.find(p => p.key === period)!.days
 
   // Pharmacy-filtered base list — если выбрана аптека, данные пересчитываются под неё
   const pharmacyFiltered = useMemo(() => {
@@ -924,7 +1438,7 @@ export function NeedPage() {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <div className="flex h-full flex-col overflow-hidden bg-white"
-      onClick={() => { setGroupOpen(false); setStatusOpen(false); setPharmacyOpen(false) }}>
+      onClick={() => { setGroupOpen(false); setPharmacyOpen(false) }}>
 
       {/* ── Top controls ──────────────────────────────────────────────────── */}
       <div className="shrink-0 border-b border-gray-200 bg-white px-6 py-3">
@@ -1009,79 +1523,77 @@ export function NeedPage() {
             )}
           </div>
 
-          {/* Min sales filter */}
-          <div className="relative h-9 w-[180px] shrink-0">
-            <input
-              type="text"
-              inputMode="decimal"
-              placeholder="Продажа в день"
-              value={minSales}
-              onChange={e => {
-                const v = e.target.value
-                if (v === '' || /^\d*\.?\d*$/.test(v)) setMinSales(v)
-              }}
-              className="h-full w-full rounded-lg border border-gray-200 bg-white px-3 pr-7 text-sm outline-none transition-colors focus:border-gray-400 tabular-nums"
-            />
-            {minSales && (
-              <button onClick={() => setMinSales('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500">
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
 
-          {/* Status filter */}
+          {/* Period dropdown */}
           <div className="relative shrink-0" onClick={e => e.stopPropagation()}>
-            <button onClick={() => setStatusOpen(v => !v)}
+            <button
+              onClick={() => setPeriodOpen(v => !v)}
               className={cn(
-                'flex h-9 w-[180px] items-center gap-1.5 rounded-lg border px-3 text-sm transition-colors',
-                statusFilter.length > 0 ? 'border-gray-300 text-gray-700' : 'border-gray-200 text-gray-500 hover:border-gray-300',
-              )}>
-              <span className="flex-1 text-left">{statusFilter.length > 0 ? `Статус: ${statusFilter.length}` : 'Статус'}</span>
-              <ChevronDown className={cn('h-3.5 w-3.5 shrink-0 transition-transform', statusOpen && 'rotate-180')} />
+                'flex h-9 w-[260px] items-center gap-2 rounded-lg border bg-white px-3 text-sm transition-colors',
+                periodOpen
+                  ? 'border-gray-400 ring-2 ring-gray-900/20'
+                  : 'border-gray-200 text-gray-700 hover:border-gray-300',
+              )}
+            >
+              <Calendar className="h-4 w-4 shrink-0 text-gray-400" />
+              <span className="whitespace-nowrap text-gray-500">Потребность на:</span>
+              <span className="flex-1 truncate text-left font-medium text-gray-900">
+                {period === 'custom'
+                  ? (customFrom && customTo ? `${fmtDate(customFrom)} — ${fmtDate(customTo)}` : 'Свой период')
+                  : PERIODS.find(p => p.key === period)!.label}
+              </span>
+              <ChevronDown className={cn('h-4 w-4 shrink-0 text-gray-400 transition-transform', periodOpen && 'rotate-180')} />
             </button>
-            {statusOpen && (
-              <div className="absolute right-0 top-10 z-50 w-48 rounded-xl border border-gray-200 bg-white py-1 shadow-lg">
-                {(Object.keys(STATUS_CFG) as NeedStatus[]).map(s => {
-                  const sCfg = STATUS_CFG[s]
-                  const active = statusFilter.includes(s)
-                  return (
-                    <button key={s}
-                      onClick={() => setStatusFilter(prev => active ? prev.filter(x => x !== s) : [...prev, s])}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50">
-                      <div className={cn('h-4 w-4 shrink-0 rounded flex items-center justify-center border',
-                        active ? 'bg-gray-900 border-gray-900' : 'border-gray-300')}>
-                        {active && <Check className="h-3 w-3 text-white" />}
-                      </div>
-                      <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold', sCfg.badgeCls)}>
-                        {sCfg.label}
-                      </span>
-                    </button>
-                  )
-                })}
-                {statusFilter.length > 0 && (
-                  <div className="border-t border-gray-100 mt-1 pt-1">
-                    <button onClick={() => setStatusFilter([])}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50">
-                      <X className="h-3 w-3" /> Сбросить
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
 
-          {/* Period tabs */}
-          <div className="flex shrink-0 items-center gap-1 rounded-lg bg-gray-100 p-1">
-            {PERIODS.map(p => (
-              <button key={p.key} onClick={() => setPeriod(p.key)}
-                className={cn(
-                  'rounded-md px-3 py-1.5 text-sm font-medium transition-all',
-                  period === p.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700',
-                )}>
-                {p.label}
-              </button>
-            ))}
+            {periodOpen && (
+              <>
+                {/* backdrop */}
+                <div className="fixed inset-0 z-40" onClick={() => setPeriodOpen(false)} />
+                <div className="absolute left-0 top-10 z-50 w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+                  <div className="py-1">
+                    {PERIODS.map(p => (
+                      <button
+                        key={p.key}
+                        onClick={() => {
+                          setPeriod(p.key)
+                          if (p.key !== 'custom') setPeriodOpen(false)
+                        }}
+                        className={cn(
+                          'flex w-full items-center gap-2.5 px-3 py-2.5 text-sm transition-colors hover:bg-gray-50',
+                          period === p.key ? 'text-gray-900' : 'text-gray-600',
+                        )}
+                      >
+                        <div className={cn(
+                          'flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors',
+                          period === p.key ? 'border-gray-900 bg-gray-900' : 'border-gray-300',
+                        )}>
+                          {period === p.key && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                        </div>
+                        <span className={period === p.key ? 'font-medium' : ''}>{p.label}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Custom date range */}
+                  {period === 'custom' && (
+                    <div className="border-t border-gray-100 px-3 py-3">
+                      <RangeCalendar
+                        from={customFrom}
+                        to={customTo}
+                        onChange={(f, t) => { setCustomFrom(f); setCustomTo(t) }}
+                      />
+                      <button
+                        disabled={!customFrom || !customTo}
+                        onClick={() => setPeriodOpen(false)}
+                        className="mt-2 h-8 w-full rounded-lg bg-gray-900 text-sm font-medium text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Применить
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Export */}
@@ -1203,7 +1715,7 @@ export function NeedPage() {
                   </th>
                   {/* Reorderable */}
                   {colOrder.map(k => renderTh(k))}
-                  {/* Action header */}
+                  {/* AI action header */}
                   <th style={{ ...thBase, position: 'sticky', right: 0, zIndex: 4, padding: 0, borderLeft: '1px solid #e5e7eb' }} />
                 </tr>
               </thead>
@@ -1262,26 +1774,21 @@ export function NeedPage() {
                       {/* Reorderable cells */}
                       {colOrder.map(k => renderCell(k, item, recQty))}
 
-                      {/* CTA sticky right */}
-                      <td style={{
-                        position: 'sticky', right: 0, zIndex: 2, padding: '0 8px',
-                        borderLeft: '1px solid #f3f4f6',
-                        background: isOpen ? '#F3F4F6' : (cfg.rowBg || '#FFFFFF'),
-                      }}
+                      {/* AI advice sticky right */}
+                      <td
+                        style={{ position: 'sticky', right: 0, zIndex: 2, padding: '0 10px', borderLeft: '1px solid #f3f4f6', background: isOpen ? '#F3F4F6' : (cfg.rowBg || '#FFFFFF') }}
                         className="transition-colors group-hover:bg-gray-50"
-                        onClick={e => e.stopPropagation()}>
+                        onClick={e => e.stopPropagation()}
+                      >
                         <button
-                          onClick={() => setDrawerItem(isOpen ? null : item)}
-                          title="Подробнее"
-                          className={cn(
-                            'flex h-8 w-8 items-center justify-center rounded-lg border transition-all',
-                            isOpen
-                              ? 'border-gray-900 bg-gray-900 text-white'
-                              : 'border-gray-200 text-gray-400 hover:border-gray-900 hover:text-gray-900',
-                          )}>
-                          <Eye className="h-4 w-4" />
+                          onClick={() => setAiItem(item)}
+                          title="AI-рекомендации"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-400 transition-all hover:border-violet-400 hover:bg-violet-50 hover:text-violet-600"
+                        >
+                          <Sparkles className="h-4 w-4" />
                         </button>
                       </td>
+
                     </tr>
                   )
                 })}
@@ -1332,6 +1839,11 @@ export function NeedPage() {
           onSelectOffer={offer => setSelectedOfferMap(prev => ({ ...prev, [offersModalItem.id]: offer }))}
           onClose={() => setOffersModalItem(null)}
         />
+      )}
+
+      {/* AI Advice Modal */}
+      {aiItem && (
+        <AIAdviceModal item={aiItem} onClose={() => setAiItem(null)} />
       )}
     </div>
   )
