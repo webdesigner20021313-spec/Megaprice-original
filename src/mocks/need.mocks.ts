@@ -1,31 +1,4 @@
-// ─── Existing: PharmacyAnalytics (используется в старом NeedPage) ─────────────
-
-export interface PharmacySaleRow {
-  pharmacyName: string
-  manufacturer: string
-  salePrice: number
-  sales30d: number
-  stock: number
-  lastPurchaseDate: string
-}
-
-export const mockPharmacyAnalytics: Record<string, PharmacySaleRow[]> = {
-  m1: [
-    { pharmacyName: 'Дорилар дунёси (Мирабад)',  manufacturer: 'Novartis',          salePrice: 52000,  sales30d: 28, stock: 12, lastPurchaseDate: '2026-04-01' },
-    { pharmacyName: 'Шифо (Юнусабад)',            manufacturer: 'Novartis',          salePrice: 53500,  sales30d: 15, stock:  8, lastPurchaseDate: '2026-03-20' },
-    { pharmacyName: 'Здоровье (Чиланзар)',        manufacturer: 'Novartis',          salePrice: 51000,  sales30d: 32, stock:  5, lastPurchaseDate: '2026-04-10' },
-    { pharmacyName: 'Hayot Dori (Самарканд)',     manufacturer: 'Novartis',          salePrice: 50000,  sales30d: 10, stock: 18, lastPurchaseDate: '2026-03-15' },
-    { pharmacyName: 'Nasiba Dori (Фергана)',      manufacturer: 'Novartis',          salePrice: 49500,  sales30d:  7, stock:  3, lastPurchaseDate: '2026-04-05' },
-  ],
-  m2: [
-    { pharmacyName: 'Дорилар дунёси (Мирабад)',  manufacturer: 'Novartis',          salePrice: 18500,  sales30d: 45, stock: 30, lastPurchaseDate: '2026-04-08' },
-    { pharmacyName: 'Шифо (Юнусабад)',            manufacturer: 'Novartis',          salePrice: 19000,  sales30d: 22, stock:  7, lastPurchaseDate: '2026-03-25' },
-    { pharmacyName: 'Здоровье (Чиланзар)',        manufacturer: 'Novartis',          salePrice: 18000,  sales30d: 38, stock: 15, lastPurchaseDate: '2026-04-12' },
-    { pharmacyName: 'Hayot Dori (Самарканд)',     manufacturer: 'Novartis',          salePrice: 17500,  sales30d: 18, stock: 25, lastPurchaseDate: '2026-03-10' },
-  ],
-}
-
-// ─── NEW: NeedItem — аналитика по каждому товару ─────────────────────────────
+// ─── NeedItem — аналитика по каждому товару ─────────────────────────────────
 
 export type NeedStatus = 'oos' | 'critical' | 'normal' | 'overstock' | 'dead'
 
