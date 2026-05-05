@@ -39,32 +39,38 @@
 src/
 ├── components/
 │   ├── ui/          — UI Kit компоненты (Button, Input, Select, Card, Badge, Table, Modal, Toast)
-│   └── shared/      — Toaster (toast-уведомления)
+│   └── shared/      — Toaster (toast-уведомления), PrivateRoute
 ├── layouts/
 │   ├── RootLayout.tsx — Основной layout (Sidebar + Header + Outlet)
 │   ├── Header.tsx     — Лого, поиск страниц, уведомления, профиль
-│   └── Sidebar.tsx    — Навигация: Магазин / Потребность / Корзинка / Аналитика
+│   └── Sidebar.tsx    — Навигация: Магазин / Потребность / Корзинка / Заказы / Дистрибуторы
 ├── pages/
-│   ├── dashboard/   — DashboardPage (заглушка)
+│   ├── auth/        — LoginPage (логин + восстановление пароля)
 │   ├── purchase/    — PurchasePage + компоненты (реализовано): PharmacySelector,
 │   │                  PurchaseHeader, MedicineList/, SupplierOffers/, AutoSelect/
 │   │                  hooks/ (useColumnResize, useFavorites, usePurchaseCart)
 │   │                  types/purchase.types.ts
-│   ├── orders/      — OrderHistoryPage, OrderDetailPage (заглушки)
-│   ├── catalog/     — MedicineCatalogPage, ExcelUploadPage, PosListPage (заглушки)
-│   ├── pharmacies/  — PharmacyListPage, AddPharmacyPage, PharmacyDetailPage (заглушки)
-│   ├── analytics/   — ReportsPage, StatisticsPage (заглушки)
-│   └── settings/    — SettingsPage (заглушка)
+│   ├── need/        — NeedPage (Потребность — реализовано)
+│   ├── cart/        — CartPage (Корзина — реализовано)
+│   ├── orders/      — OrderHistoryPage, OrderDetailPage (реализовано)
+│   ├── wholesalers/ — WholesalersPage (Дистрибуторы — реализовано)
+│   └── users/       — UsersPage, RoleCreatePage, RoleEditPage + компоненты (готовится)
 ├── stores/
 │   ├── useUIStore.ts           — Состояние sidebar, subPanel, language, mobile
 │   ├── useUserStore.ts         — Профиль пользователя
-│   └── useNotificationStore.ts — Уведомления (read/unread)
+│   ├── useNotificationStore.ts — Уведомления (read/unread)
+│   ├── useAuthStore.ts         — Авторизация (persist)
+│   ├── useOrdersStore.ts       — Заказы (инициализируется из mockOrders)
+│   └── useWholesalersStore.ts  — Скидки дистрибуторов (пусто по умолчанию)
 ├── data/
 │   ├── types.ts          — Общие TypeScript интерфейсы
 │   ├── user.ts           — Моковый профиль пользователя
 │   └── notifications.ts  — Моковые уведомления
 ├── mocks/
-│   └── purchase.mocks.ts — Моки для модуля Закупки (аптеки, лекарства, поставщики)
+│   ├── purchase.mocks.ts  — Моки для модуля Закупки (аптеки, лекарства, поставщики)
+│   ├── orders.mocks.ts    — Моки истории заказов
+│   ├── need.mocks.ts      — Моки для модуля Потребность
+│   └── wholesalers.mocks.ts — Моки дистрибуторов
 └── lib/
     ├── utils.ts   — cn() helper
     └── format.ts  — formatCurrency, formatDate, formatDateTime, formatNumber
@@ -73,35 +79,31 @@ src/
 ## Роуты
 | Путь | Страница | Статус |
 |------|----------|--------|
-| `/` | DashboardPage | Заглушка |
+| `/` | → редирект на `/purchase` | — |
 | `/purchase` | PurchasePage | ✅ Реализовано |
-| `/orders` | OrderHistoryPage | Заглушка |
-| `/orders/:id` | OrderDetailPage | Заглушка |
-| `/catalog` | MedicineCatalogPage | Заглушка |
-| `/catalog/upload` | ExcelUploadPage | Заглушка |
-| `/catalog/pos` | PosListPage | Заглушка |
-| `/pharmacies` | PharmacyListPage | Заглушка |
-| `/pharmacies/add` | AddPharmacyPage | Заглушка |
-| `/pharmacies/:id` | PharmacyDetailPage | Заглушка |
-| `/analytics/reports` | ReportsPage | Заглушка |
-| `/analytics/statistics` | StatisticsPage | Заглушка |
-| `/cart` | SettingsPage (временная заглушка) | Заглушка |
-| `/settings` | SettingsPage | Заглушка |
+| `/need` | NeedPage | ✅ Реализовано |
+| `/cart` | CartPage | ✅ Реализовано |
+| `/orders` | OrderHistoryPage | ✅ Реализовано |
+| `/orders/:id` | OrderDetailPage | ✅ Реализовано |
+| `/wholesalers` | WholesalersPage | ✅ Реализовано |
+| `/users` | UsersPage | 🔧 Готовится |
+| `/users/roles/create` | RoleCreatePage | 🔧 Готовится |
+| `/users/roles/:id/edit` | RoleEditPage | 🔧 Готовится |
 
-## Компоненты Этапа 1
+## Компоненты Layout
 
 ### Header (`src/layouts/Header.tsx`)
 - Поиск страниц и разделов (фильтрация в реальном времени)
 - Колокольчик уведомлений с badge непрочитанных
 - Dropdown уведомлений: список, «Прочитать все»
-- Фото профиля → dropdown: имя/роль, Аккаунт, Настройки, Выйти
-- Гамбургер-меню на мобильных
+- Профиль → dropdown: имя/роль, Выйти
+- Переключатель языка (UZ / RU / EN)
 
 ### Sidebar (`src/layouts/Sidebar.tsx`)
-- 4 пункта: Магазин (`/purchase`), Потребность (`/orders`), Корзинка (`/cart`), Аналитика (`/analytics/reports`)
+- 5 пунктов: Магазин, Потребность, Корзинка, Заказы, Дистрибуторы
 - Узкая фиксированная ширина 140px, фон `#1C1917`
 - Активный пункт — белая "пилюля" 108×40 с тёмным текстом
-- Иконки Lucide, подписи 16px
+- Иконки Lucide, подписи под иконками
 
 ### Модуль «Закупки» (`src/pages/purchase/`)
 - PurchasePage — главный контейнер
@@ -109,21 +111,16 @@ src/
 - PurchaseHeader — шапка модуля
 - MedicineList/ — список лекарств (Tabs, Filters, Row, Table, ExcelUploadView)
 - SupplierOffers/ — предложения поставщиков (Filters, Row, Table, QuantityControl)
-- AutoSelect/ — модалка автоподбора
+- AutoSelect/ — модалка авто-подбора
 - hooks/ — useColumnResize, useFavorites, usePurchaseCart
 - types/purchase.types.ts — локальные типы модуля
 - Источник данных: `src/mocks/purchase.mocks.ts`
 
-## Этапы разработки
-- [x] Этап 0: Инициализация проекта, UI Kit, конфигурация
-- [x] Этап 1: Layout (Header + Sidebar + Routing)
-- [x] Этап 2: Модуль «Закупки» (`/purchase`)
-- [ ] Этап 3: Dashboard
-- [ ] Этап 4: Модуль «Заказы» (история, детали)
-- [ ] Этап 5: Модуль «Каталог лекарств»
-- [ ] Этап 6: Модуль «Мои аптеки»
-- [ ] Этап 7: Модуль «Аналитика»
-- [ ] Этап 8: Настройки
+## Ключевые механики
+- **Скидки дистрибуторов:** `useWholesalersStore` — пользователь задаёт скидку в `/wholesalers`, она применяется к ценам в Магазине и Корзине. Бейдж «Спец. предложение» появляется только при user-set скидке.
+- **Создание заказов:** `useOrdersStore` — заказы сохраняются в Zustand и сразу видны в `/orders`
+- **Корзина:** синхронизирована между Магазином и Потребностью
+- **Excel загрузка:** в Магазине — маппинг колонок через модальное окно, фильтрация пустых строк/колонок
 
 ## Команды
 ```bash
@@ -133,6 +130,20 @@ npm run build  # Сборка
 
 ## История версий
 
+### v1.1.0 — 05.05.2026
+- Удалены неиспользуемые разделы: dashboard, analytics, settings, catalog, pharmacies
+- Исправлены орфографические ошибки: «Дистрибьютор» → «Дистрибутор», «Авто подбор» → «Авто-подбор»
+- Исправлена CI ошибка TS6133 (неиспользуемый импорт cn)
+- Версия пакета обновлена до 1.1.0
+
+### v1.0.10 — 05.05.2026
+- Дистрибуторы: скидки хранятся в Zustand (useWholesalersStore), применяются в Магазине и Корзине
+- Бейдж «Спец. предложение» в предложениях поставщиков при наличии user-скидки
+- Заказы сохраняются через useOrdersStore, сразу видны в истории
+- Инвойс: лого MegaPrice через base64 SVG, всегда показывается дистрибутор
+- Excel маппинг: модальное окно вместо панели, фильтрация пустых строк и колонок
+- Success-модал корзины: переработан в таблицу дистрибуторов
+
 ### v1.0.6 — 29.04.2026
 - Страница «Потребность»: переработан выбор аптеки — мульти-селект заменён на одиночный (radio-style)
 - Выбор аптеки фильтрует таблицу по данным конкретной аптеки (пересчёт остатков, продаж, статусов)
@@ -141,35 +152,12 @@ npm run build  # Сборка
 - Drawer детали продукта: ширина 580px, единые отступы 16px, цена 18px, кнопка «Добавить в корзину»
 - MiniBarChart: резиновая ширина через ResizeObserver, hover-тултип с данными месяца
 - 4 KPI-карточки: Нет в наличии / Критично / Срочный заказ / Заморожено
-- Статусные тексты: «Закончился X дней назад», «Хватит на X дн.»
 
 ### v1.0.5 — 27.04.2026
 - Добавлён раздел «Потребность» (/need): 3-панельный layout (лекарства | оптовики | аналитика аптек)
-- Фильтры Дистрибьютор/Город/Бонусы вынесены в шапку рядом с периодом
+- Фильтры Дистрибутор/Город/Бонусы вынесены в шапку рядом с периодом
 - Кнопка Корзины в шапке Потребности (синхронизирована с общей корзиной)
-- SupplierTable: sticky-заголовки, spacer-колонка, таблица растягивается на всю ширину
-- Строка «Итого» в таблице аналитики аптек — фиксирована внизу
-- CartPage / SuccessModal: показ канала отправки заказа (Telegram / Email) по оптовику
-
-### v1.0.4 — 24.04.2026
-- Button secondary: фиолетовый #4e36f5 → белый с серой рамкой
-- Badge / Toast: все варианты приведены к точным цветам стайл гайда
-- Header уведомления: фон #f8f8ff → gray-50, точки типов → правильные цвета
-- Sidebar неактивный текст: #666666 → #6B7280 (gray-500)
-- Корзина: синий blue-50/40 на выбранных строках → gray-50, фон страницы → white
-- LoginPage: фон #F4F5F7 → #F9FAFB (gray-50)
-
-### v1.0.3 — 24.04.2026
-- После логина всегда открывается /purchase (Магазин)
-- LoginPage: редизайн — лого внутри карточки, иконки в полях, «Забыли пароль?» рядом с лейблом
-- CartPage: редизайн — карточки групп, hover на строках, цена «за шт.» + «итого», новая правая панель
-
-### v1.0.2 — 23.04.2026
-- Sign In страница (/login): форма логин/пароль, флоу «Забыли пароль» с mock SMS кодом
-- useAuthStore (Zustand + persist), PrivateRoute, все маршруты защищены
-- Header: кнопка «Выйти» подключена к logout() + редирект на /login
 
 ### v1.0.0 — 23.04.2026
 - Первый релиз: Layout (Header + Sidebar), модуль «Закупки», Корзина
-- Demo данные корзины (9 позиций от 3 оптовиков)
-- UI Kit: Button, Input, Badge, Toast, Card, Table, Modal, Select 
+- UI Kit: Button, Input, Badge, Toast, Card, Table, Modal, Select

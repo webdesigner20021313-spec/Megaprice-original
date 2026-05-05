@@ -21,7 +21,6 @@ const navItems: NavItem[] = [
   { label: 'Корзинка',    path: '/cart',              icon: <ShoppingCart className="h-6 w-6" />, end: true  },
   { label: 'Заказы',      path: '/orders',            icon: <ClipboardList className="h-6 w-6" />, end: false },
   { label: 'Дистрибуторы', path: '/wholesalers',       icon: <Building2 className="h-6 w-6" />,    end: true  },
-  // { label: 'Аналитика',   path: '/analytics/reports', icon: <BarChart3 className="h-6 w-6" />,    end: false },
   // { label: 'Пользователи', path: '/users',            icon: <Users className="h-6 w-6" />,        end: true  },
 ]
 

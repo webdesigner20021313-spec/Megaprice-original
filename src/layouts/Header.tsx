@@ -4,7 +4,6 @@ import {
   Bell,
   Search,
   LogOut,
-  User,
   CheckCheck,
   ChevronDown,
 } from 'lucide-react'
@@ -18,16 +17,11 @@ import { useToast } from '@/components/shared/Toaster'
 import { formatDateTime } from '@/lib/format'
 
 const searchablePages = [
-  { label: 'Создать заказ', path: '/orders/create', section: 'Закупки' },
-  { label: 'Каталог лекарств', path: '/catalog', section: 'Закупки' },
+  { label: 'Магазин', path: '/purchase', section: 'Закупки' },
+  { label: 'Потребность', path: '/need', section: 'Закупки' },
+  { label: 'Корзина', path: '/cart', section: 'Закупки' },
   { label: 'История заказов', path: '/orders', section: 'Заказы' },
-  { label: 'Отчёты', path: '/analytics/reports', section: 'Аналитика' },
-  { label: 'Статистика', path: '/analytics/statistics', section: 'Аналитика' },
-  { label: 'Загрузить Excel', path: '/catalog/upload', section: 'Закупки' },
-  { label: 'Список из POS', path: '/catalog/pos', section: 'Закупки' },
-  { label: 'Мои аптеки', path: '/pharmacies', section: 'Аптеки' },
-  { label: 'Добавить аптеку', path: '/pharmacies/add', section: 'Аптеки' },
-  { label: 'Настройки', path: '/settings', section: 'Настройки' },
+  { label: 'Дистрибуторы', path: '/wholesalers', section: 'Справочники' },
 ]
 
 export function Header() {
@@ -319,16 +313,6 @@ export function Header() {
                   <p className="truncate text-sm font-semibold text-gray-900">{user.name}</p>
                   <p className="truncate text-xs text-gray-400">{user.email}</p>
                 </div>
-              </div>
-
-              <div className="py-1">
-                <button
-                  onClick={() => { navigate('/settings'); setShowProfile(false) }}
-                  className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
-                >
-                  <User className="h-4 w-4 text-gray-400" />
-                  Аккаунт
-                </button>
               </div>
 
               <div className="border-t border-gray-100 py-1">
